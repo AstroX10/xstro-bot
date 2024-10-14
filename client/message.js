@@ -95,6 +95,7 @@ class MessageHandler {
      mention: quotedContextInfo.mentionedJid || [],
      fromMe: isFromMe,
      isOwner: isOwnerOrFromMe,
+     participant : senderJID,
      sender: senderJID,
      senderNumber: participantNumber,
      contextInfo: quotedContextInfo || {},
