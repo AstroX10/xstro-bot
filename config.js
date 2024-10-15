@@ -27,6 +27,7 @@ module.exports = {
  SESSION_ID: process.env.SESSION_ID || '',
  PREFIX: process.env.HANDLER || '.',
  ANTI_CALL: process.env.ANTI_CALL || 'false', // 'true' | 'false' | 'block'
+ MISC_MSG: process.env.MISC_MSG || true,
  WARN_COUNT: 3,
  SUDO: process.env.SUDO || '',
  AUTO_READ_MESSAGE: process.env.AUTO_READ || false,

@@ -1,7 +1,7 @@
 const getDeletedMsg = require('./delete');
 
 module.exports = {
- MessageHandler: require('./message'),
+ Handler: require('./message'),
  Greetings: require('./group'),
  getDeletedMsg,
 };
