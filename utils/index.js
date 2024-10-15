@@ -1,5 +1,10 @@
+const fs = require('fs');
 const axios = require('axios');
+const webp = require('node-webpmux');
+const path = require('path');
+const crypto = require('crypto');
 const { fromBuffer } = require('file-type');
+const { tmpdir } = require('os');
 const { Buffer } = require('buffer');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
@@ -111,12 +116,57 @@ async function getJson(url, options) {
   return err;
  }
 }
+const getTempPath = () => path.join(tmpdir(), `${crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}`);
+
+const convertToWebp = async (media, isVideo = false) => {
+ const tmpFileIn = getTempPath() + (isVideo ? '.mp4' : '.jpg');
+ const tmpFileOut = getTempPath() + '.webp';
+ fs.writeFileSync(tmpFileIn, media);
+
+ await new Promise((resolve, reject) => {
+  ffmpeg(tmpFileIn)
+   .outputOptions(['-vcodec', 'libwebp', '-vf', "scale='min(320,iw)':min'(320,ih)':force_original_aspect_ratio=decrease,fps=15, pad=320:320:-1:-1:color=white@0.0, split [a][b]; [a] palettegen=reserve_transparent=on:transparency_color=ffffff [p]; [b][p] paletteuse", ...(isVideo ? ['-loop', '0', '-ss', '00:00:00', '-t', '00:00:05', '-preset', 'default', '-an', '-vsync', '0'] : [])])
+   .toFormat('webp')
+   .on('error', reject)
+   .on('end', () => resolve(true))
+   .save(tmpFileOut);
+ });
+
+ const buff = fs.readFileSync(tmpFileOut);
+ fs.unlinkSync(tmpFileOut);
+ fs.unlinkSync(tmpFileIn);
+ return buff;
+};
+
+const writeExif = async (media, metadata, isWebp = false) => {
+ const tmpFileIn = getTempPath() + '.webp';
+ const tmpFileOut = getTempPath() + '.webp';
+ fs.writeFileSync(tmpFileIn, isWebp ? media : await convertToWebp(media, !isWebp && media.length > 200000));
+
+ if (metadata.packname || metadata.author) {
+  const img = new webp.Image();
+  const json = {
+   'sticker-pack-id': 'https://github.com/AstroX10/xstro-bot',
+   'sticker-pack-name': metadata.packname,
+   'sticker-pack-publisher': metadata.author,
+   emojis: metadata.categories || [''],
+  };
+  const exifAttr = Buffer.from([0x49, 0x49, 0x2a, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x41, 0x57, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00]);
+  const jsonBuff = Buffer.from(JSON.stringify(json), 'utf-8');
+  const exif = Buffer.concat([exifAttr, jsonBuff]);
+  exif.writeUIntLE(jsonBuff.length, 14, 4);
+  await img.load(tmpFileIn);
+  fs.unlinkSync(tmpFileIn);
+  img.exif = exif;
+  await img.save(tmpFileOut);
+  return tmpFileOut;
+ }
+};
 
 module.exports = {
  toAudio,
  toPTT,
  toVideo,
- ffmpeg,
  FiletypeFromUrl,
  getBuffer,
  UrlFromMsg,
@@ -133,4 +183,9 @@ module.exports = {
  getUrl: (getUrl = (url) => {
   return url.match(new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)/, 'gi'));
  }),
+ imageToWebp: (media) => convertToWebp(media),
+ videoToWebp: (media) => convertToWebp(media, true),
+ writeExifImg: (media, metadata) => writeExif(media, metadata),
+ writeExifVid: (media, metadata) => writeExif(media, metadata),
+ writeExifWebp: (media, metadata) => writeExif(media, metadata, true),
 };
