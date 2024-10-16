@@ -23,8 +23,8 @@ command(
   description: 'Show All Commands',
   dontAddCommandList: true,
  },
- async (message, match, m, client) => {
-  const { prefix, pushName } = message;
+ async (message) => {
+  const { prefix, senderName } = message;
   const currentTime = new Date().toLocaleTimeString('en-IN', {
    timeZone: process.env.TZ,
   });
@@ -36,7 +36,7 @@ command(
   });
   let menuText = `\`\`\`╭─ wa ───
 │ Prefix: ${prefix}
-│ User: ${pushName}
+│ User: ${senderName}
 │ Plugins: ${commands.length}
 │ Runtime: ${runtime(process.uptime())}
 │ Time: ${currentTime}

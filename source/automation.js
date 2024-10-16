@@ -2,7 +2,6 @@ const { command } = require('../lib');
 const { isAdmin } = require('./group');
 const { getAntiLink, setAntiLink, deleteAntiLink, AntiWord, addAntiWord, getAntiWords } = require('../db');
 
-// AntiLink Command
 command(
  {
   pattern: 'antilink ?(.*)',
@@ -110,7 +109,6 @@ command(
  }
 );
 
-// AntiWord Deletion Behavior
 command(
  {
   on: 'text',

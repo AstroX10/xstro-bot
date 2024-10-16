@@ -69,6 +69,12 @@ class Handler {
   };
 
   this.mediaType = mediaTypes[this.type] || 'text';
+  this.image = this.mediaType === mediaTypes.image ? this.message : false;
+  this.video = this.mediaType === mediaTypes.video ? this.message : false;
+  this.audio = this.mediaType === mediaTypes.audio ? this.message : false;
+  this.document = this.mediaType === mediaTypes.document ? this.message : false;
+  this.sticker = this.mediaType === mediaTypes.sticker ? this.message : false;
+
   this.mediaUrl = this.message?.url || null;
   this.fileSize = this.message?.fileLength || null;
   this.caption = this.message?.caption || null;
@@ -82,6 +88,13 @@ class Handler {
   const quotedMessage = quoted.message;
   const quotedContextInfo = quotedMessage?.extendedTextMessage?.contextInfo || quotedMessage?.contextInfo || {};
   const senderJID = quoted.sender;
+  const mediaType = this._getMediaType(quotedMessage);
+
+  const isImage = mediaType === 'image' || Boolean(quotedMessage?.imageMessage);
+  const isVideo = mediaType === 'video' || Boolean(quotedMessage?.videoMessage);
+  const isAudio = mediaType === 'audio' || Boolean(quotedMessage?.audioMessage);
+  const isDocument = mediaType === 'document' || Boolean(quotedMessage?.documentMessage);
+  const isSticker = mediaType === 'sticker' || Boolean(quotedMessage?.stickerMessage);
 
   this.reply_message = {
    key: quotedKey,
@@ -95,11 +108,16 @@ class Handler {
    isOwner: quotedKey.remoteJid === this.sudo || quotedKey.fromMe,
    contextInfo: quotedContextInfo || {},
    messageInfo: quotedMessage,
-   mediaType: this._getMediaType(quotedMessage),
+   mediaType: mediaType,
    mediaUrl: this._getMediaUrl(quotedMessage),
    fileSize: this._getFileSize(quotedMessage),
    caption: this._getCaption(quotedMessage),
    isViewOnce: Boolean(quotedMessage?.viewOnceMessage || quotedMessage?.viewOnceMessageV2),
+   image: isImage,
+   video: isVideo,
+   audio: isAudio,
+   document: isDocument,
+   sticker: isSticker,
   };
  }
 

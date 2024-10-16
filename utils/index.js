@@ -167,7 +167,7 @@ async function writeExifImg(media, metadata) {
  if (metadata.packname || metadata.author) {
   const img = new webp.Image();
   const json = {
-   'sticker-pack-id': `https://github.com/Neeraj-x0/x-asena`,
+   'sticker-pack-id': `https://github.com/AstroX10/xstro-bot`,
    'sticker-pack-name': metadata.packname,
    'sticker-pack-publisher': metadata.author,
    emojis: metadata.categories ? metadata.categories : [''],
@@ -193,7 +193,7 @@ async function writeExifVid(media, metadata) {
  if (metadata.packname || metadata.author) {
   const img = new webp.Image();
   const json = {
-   'sticker-pack-id': `https://github.com/Neeraj-x0/x-asena`,
+   'sticker-pack-id': `https://github.com/AstroX10/xstro-bot`,
    'sticker-pack-name': metadata.packname,
    'sticker-pack-publisher': metadata.author,
    emojis: metadata.categories ? metadata.categories : [''],
@@ -218,7 +218,7 @@ async function writeExifWebp(media, metadata) {
  if (metadata.packname || metadata.author) {
   const img = new webp.Image();
   const json = {
-   'sticker-pack-id': `https://github.com/Neeraj-x0/x-asena`,
+   'sticker-pack-id': `https://github.com/AstroX10/xstro-bot`,
    'sticker-pack-name': metadata.packname,
    'sticker-pack-publisher': metadata.author,
    emojis: metadata.categories ? metadata.categories : [''],
@@ -234,6 +234,18 @@ async function writeExifWebp(media, metadata) {
   return tmpFileOut;
  }
 }
+const runtime = function (seconds) {
+ seconds = Number(seconds);
+ var d = Math.floor(seconds / (3600 * 24));
+ var h = Math.floor((seconds % (3600 * 24)) / 3600);
+ var m = Math.floor((seconds % 3600) / 60);
+ var s = Math.floor(seconds % 60);
+ var dDisplay = d > 0 ? d + (d == 1 ? ' d ' : ' d ') : '';
+ var hDisplay = h > 0 ? h + (h == 1 ? ' h ' : ' h ') : '';
+ var mDisplay = m > 0 ? m + (m == 1 ? ' m ' : ' m ') : '';
+ var sDisplay = s > 0 ? s + (s == 1 ? ' s' : ' s') : '';
+ return dDisplay + hDisplay + mDisplay + sDisplay;
+};
 
 module.exports = {
  toAudio,
@@ -260,4 +272,5 @@ module.exports = {
  writeExifImg,
  writeExifVid,
  writeExifWebp,
+ runtime,
 };

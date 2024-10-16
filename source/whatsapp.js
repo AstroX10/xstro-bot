@@ -55,7 +55,7 @@ command(
  async (message, match, m, client) => {
   let jid;
   if (message.isGroup) {
-   jid = message.mention && message.mention.length > 0 ? message.mention[0] : message.reply_message ? message.reply_message.participant : null;
+   jid = message.mention && message.mention.length > 0 ? message.mention[0] : message.reply_message ? message.reply_message.jid : null;
    if (!jid) return await message.reply('_Please mention or reply to the person you want to block._');
    await client.updateBlockStatus(jid, 'block');
    return await message.reply(`_@${jid.split('@')[0]} Blocked_`, { mentions: [jid] });
@@ -77,7 +77,7 @@ command(
  async (message, match, m, client) => {
   let jid;
   if (message.isGroup) {
-   jid = message.mention && message.mention.length > 0 ? message.mention[0] : message.reply_message ? message.reply_message.participant : null;
+   jid = message.mention && message.mention.length > 0 ? message.mention[0] : message.reply_message ? message.reply_message.jid : null;
    if (!jid) return await message.reply('_Please mention or reply to the person you want to Unblock._');
    await client.updateBlockStatus(jid, 'unblock');
    return await message.reply(`_@${jid.split('@')[0]} UnBlocked_`, { mentions: [jid] });
@@ -97,8 +97,7 @@ command(
   type: 'whatsapp',
  },
  async (message, match, m, client) => {
-  const targetJid = message.reply_message?.sender || message.jid;
-  if (!targetJid) return await message.reply(message.jid, 'Unable to retrieve the JID.');
+  const targetJid = message.reply_message?.jid || message.jid || message.mention[0];
   return await message.send(targetJid);
  }
 );
@@ -120,7 +119,7 @@ command(
  {
   pattern: 'edit ?(.*)',
   fromMe: true,
-  desc: 'Edit message sent by the bot',
+  desc: 'Edit message sent by the command',
   type: 'whatsapp',
  },
  async (message, match, m, client) => {
@@ -141,9 +140,163 @@ command(
   if (!message.reply_message) return await message.reply('*Reply to a message*');
   let key = message.reply_message.key;
   let msg = await loadMessage(key.id);
-  if (!msg) return await message.reply('_Message not found maybe bot might not be running at that time_');
+  if (!msg) return await message.reply('_Message not found maybe command might not be running at that time_');
   msg = await serialize(JSON.parse(JSON.stringify(msg.message)), message.client);
   if (!msg.quoted) return await message.reply('No quoted message found');
   await message.copyNForward(message.jid, msg.quoted.message);
+ }
+);
+
+command(
+ {
+  pattern: 'clear ?(.*)',
+  fromMe: true,
+  desc: 'delete whatsapp chat',
+  type: 'whatsapp',
+ },
+ async (message, match, m, client) => {
+  await client.chatModify(
+   {
+    delete: true,
+    lastMessages: [
+     {
+      key: message.data.key,
+      messageTimestamp: message.timestamp,
+     },
+    ],
+   },
+   message.jid
+  );
+  await message.reply('_Cleared.._');
+ }
+);
+
+command(
+ {
+  pattern: 'archive ?(.*)',
+  fromMe: true,
+  desc: 'archive whatsapp chat',
+  type: 'whatsapp',
+ },
+ async (message, match, m, client) => {
+  const lstMsg = {
+   message: message.message,
+   key: message.key,
+   messageTimestamp: message.timestamp,
+  };
+  await client.chatModify(
+   {
+    archive: true,
+    lastMessages: [lstMsg],
+   },
+   message.jid
+  );
+  await message.reply('_Archived.._');
+ }
+);
+
+command(
+ {
+  pattern: 'unarchive ?(.*)',
+  fromMe: true,
+  desc: 'unarchive whatsapp chat',
+  type: 'whatsapp',
+ },
+ async (message, match, m, client) => {
+  const lstMsg = {
+   message: message.message,
+   key: message.key,
+   messageTimestamp: message.timestamp,
+  };
+  await client.chatModify(
+   {
+    archive: false,
+    lastMessages: [lstMsg],
+   },
+   message.jid
+  );
+  await message.reply('_Unarchived.._');
+ }
+);
+
+command(
+ {
+  pattern: 'pin',
+  fromMe: true,
+  desc: 'pin a chat',
+  type: 'whatsapp',
+ },
+ async (message, match, m, client) => {
+  await client.chatModify(
+   {
+    pin: true,
+   },
+   message.jid
+  );
+  await message.reply('_Pined.._');
+ }
+);
+
+command(
+ {
+  pattern: 'unpin ?(.*)',
+  fromMe: true,
+  desc: 'unpin a msg',
+  type: 'whatsapp',
+ },
+ async (message, match, m, client) => {
+  await client.chatModify(
+   {
+    pin: false,
+   },
+   message.jid
+  );
+  await message.reply('_Unpined.._');
+ }
+);
+
+command(
+ {
+  pattern: 'forward ?(.*)',
+  fromMe: false,
+  desc: 'Forwards the replied message (any type) with quote',
+  type: 'whatsapp',
+ },
+ async (message, match, m, client) => {
+  if (!m.quoted) return await message.reply('Reply to a message to forward');
+  const jids = parsedJid(match);
+  for (const jid of jids) {
+   await client.relayMessage(jid, m.quoted.message, {
+    messageId: m.quoted.key.id,
+    quoted:
+     {
+      key: m.quoted.key,
+      message: m.quoted.message,
+      participant: m.quoted.participant,
+     } || message.data,
+   });
+  }
+  return message.reply('*_Message Forwarded_*');
+ }
+);
+
+command(
+ {
+  pattern: 'save ?(.*)',
+  fromMe: true,
+  desc: 'Saves WhatsApp Status',
+  type: 'whatsapp',
+ },
+ async (message, match, m, client) => {
+  if (!message.reply_message?.image && !message.reply_message.video && !message.reply_message.audio) return await message.reply('_Reply to a status message with media_');
+  const relayOptions = {
+   messageId: m.quoted.key.id,
+   quoted: {
+    key: m.quoted.key,
+    message: m.quoted.message,
+    participant: m.quoted.participant,
+   },
+  };
+  return await client.relayMessage(message.user, m.quoted.message, relayOptions);
  }
 );
