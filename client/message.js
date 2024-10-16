@@ -1,14 +1,13 @@
-const { getBuffer, writeExifWebp, imageToWebp, writeExifVid, videoToWebp, writeExifImg } = require('../utils');
+const fs = require('fs/promises');
 const config = require('../config');
-const FileType = require('file-type');
-const { Sticker, StickerTypes } = require('wa-sticker-formatter');
-const fs = require('fs').promises;
-const os = require('os');
+const crypto = require('crypto');
 const path = require('path');
+const FileType = require('file-type');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const { getBuffer, imageToWebp, writeExifVid, videoToWebp, writeExifImg } = require('../utils');
+const { getDevice, downloadContentFromMessage, jidDecode } = require('baileys');
 ffmpeg.setFfmpegPath(ffmpegPath);
-const { generateWAMessageFromContent, getDevice, proto, downloadContentFromMessage, jidDecode } = require('baileys');
 
 class Handler {
  constructor(client, data) {
@@ -23,7 +22,7 @@ class Handler {
   this.isGroup = data.isGroup;
   this.id = data.key.id;
   this.jid = data.key.remoteJid;
-  this.pushName = data.pushName;
+  this.senderName = data.pushName;
   this.participant = this.decodeJid(data.sender);
   this.participantNumber = this.participant?.split('@')[0];
   this.sudo = this._isSudo(this.participantNumber);
@@ -32,6 +31,8 @@ class Handler {
   this.isBaileys = this.id.startsWith('BAE5') || this.id.length === 16;
   this.text = data.body || '';
   this.isOwner = this.fromMe || this.sudo;
+  this.device = getDevice(this.id);
+  this.prefix = config.PREFIX;
 
   if (this.isGroup) this._processGroupData(data);
   if (data.message) this._processMessageContent(data);
@@ -86,11 +87,13 @@ class Handler {
    jid: quotedKey.remoteJid,
    type: quoted.type || 'extendedTextMessage',
    id: quotedKey.id,
+   senderName: quoted.pushName,
    sender: senderJID,
    mention: quotedContextInfo.mentionedJid || [],
    fromMe: quotedKey.fromMe,
    isOwner: quotedKey.remoteJid === this.sudo || quotedKey.fromMe,
    contextInfo: quotedContextInfo || {},
+   messageInfo: quotedMessage,
    mediaType: this._getMediaType(quotedMessage),
    mediaUrl: this._getMediaUrl(quotedMessage),
    fileSize: this._getFileSize(quotedMessage),
@@ -217,9 +220,78 @@ class Handler {
 
    return this.client.sendMessage(jid, { ...messageContent[contentType], ...sendOptions });
   } catch (error) {
-   console.error('Error in send function:', error);
-   throw new Error(`Send operation failed: ${error.message}`);
+   console.error('Error From Send Method', error);
+   throw new Error(`Failed To Send Message: Unsupported!`);
   }
+ }
+ async download(message) {
+  const msg = message || this.reply_message?.messageInfo;
+
+  if (!msg) throw new Error('No message available for download.');
+
+  const mimeMap = {
+   imageMessage: 'image',
+   videoMessage: 'video',
+   stickerMessage: 'sticker',
+   documentMessage: 'document',
+   audioMessage: 'audio',
+  };
+
+  const type = Object.keys(msg).find((key) => mimeMap[key]);
+
+  if (!type) throw new Error('Unsupported media type in message.');
+
+  const mediaType = mimeMap[type];
+  const stream = await downloadContentFromMessage(msg[type], mediaType);
+
+  let buffer = Buffer.from([]);
+  for await (const chunk of stream) {
+   buffer = Buffer.concat([buffer, chunk]);
+  }
+
+  const fileExtension = this.getFileExtension(msg[type]);
+  const fileName = this.generateFileName(mediaType, fileExtension);
+  const filePath = path.join(this.outputDir, fileName);
+
+  await fs.mkdir(this.outputDir, { recursive: true });
+  await fs.writeFile(filePath, buffer);
+
+  return {
+   buffer,
+   fileName,
+   filePath,
+   mediaType,
+   fileSize: buffer.length,
+  };
+ }
+
+ getFileExtension(messageType) {
+  const mimeType = messageType.mimetype;
+  const extensions = {
+   'image/jpeg': 'jpg',
+   'image/png': 'png',
+   'video/mp4': 'mp4',
+   'audio/ogg; codecs=opus': 'ogg',
+   'application/pdf': 'pdf',
+  };
+  return extensions[mimeType] || 'bin';
+ }
+
+ generateFileName(mediaType, fileExtension) {
+  const timestamp = Date.now();
+  const randomString = crypto.randomBytes(4).toString('hex');
+  return `${mediaType}_${timestamp}_${randomString}.${fileExtension}`;
+ }
+
+ async downloadBatch(messages) {
+  const results = await Promise.allSettled(messages.map((msg) => this.download(msg)));
+  return results.map((result, index) => {
+   if (result.status === 'fulfilled') {
+    return { success: true, data: result.value };
+   } else {
+    return { success: false, error: result.reason, messageIndex: index };
+   }
+  });
  }
 }
 
