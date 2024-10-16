@@ -3,16 +3,30 @@ const { loadMessage } = require('../db');
 
 command(
  {
-  pattern: 'setpp',
+  pattern: 'vv ?(.*)',
+  fromMe: false,
+  desc: 'Downloads ViewOnce Messages',
+  type: 'whatsapp',
+ },
+ async (message) => {
+  if (!message.reply_message.isViewOnce) return message.reply('_Reply A ViewOnce Message!_');
+  const content = await message.download(message.reply_message.messageInfo.viewOnceMessage.message);
+  await message.send(content.buffer, { jid: message.user });
+  return message.reply('_Saved, Check your Dm Sir_');
+ }
+);
+
+command(
+ {
+  pattern: 'setpp ?(.*)',
   fromMe: true,
-  desc: 'Set profile picture',
+  desc: 'change WhatsApp profile Picture',
   type: 'whatsapp',
  },
  async (message, match, m, client) => {
-  if (!message.reply_message.image) return await message.reply('_Reply to a photo_');
-  let buff = await m.quoted.download();
-  await message.setPP(message.user, buff);
-  return await message.reply('_Profile Picture Updated_');
+  if (!message.reply_message.mediaType === 'imageMessage') return message.reply('_Reply An Image_');
+  let imgpath = await message.download(message.reply_message.messageInfo);
+  return await client.updateProfilePicture(message.user, { url: imgpath.filePath });
  }
 );
 

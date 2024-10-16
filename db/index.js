@@ -3,7 +3,6 @@ const { addAntiWord, removeAntiWord, getAntiWords, AntiWord } = require('./antiw
 const { getAutoReactSettings, setAutoReactSettings } = require('./autoreact');
 const { getFilter, setFilter, deleteFilter } = require('./filters');
 const { getPausedChats, savePausedChat, deleteAllPausedChats, PausedChats } = require('./chats');
-const { PluginDB, installPlugin, getandRequirePlugins, removePlugin } = require('./plugins');
 const { saveMessage, loadMessage, saveChat, getName } = require('./store');
 const { getWarns, saveWarn, resetWarn } = require('./warn');
 const { setMessage, getMessage, delMessage, toggleStatus, getStatus } = require('./greetings');
@@ -24,10 +23,6 @@ module.exports = {
  savePausedChat,
  PausedChats,
  deleteAllPausedChats,
- installPlugin,
- PluginDB,
- getandRequirePlugins,
- removePlugin,
  saveMessage,
  loadMessage,
  saveChat,

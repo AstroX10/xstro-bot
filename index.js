@@ -1,7 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
 const config = require('./config');
-const { getandRequirePlugins } = require('./db');
 
 async function readAndRequireFiles(directory) {
  try {
@@ -14,7 +13,6 @@ async function readAndRequireFiles(directory) {
 }
 
 async function initialize() {
- console.log('X-Asena');
  try {
   await readAndRequireFiles(path.join(__dirname, '/db/'));
   console.log('Syncing Database');
@@ -22,7 +20,6 @@ async function initialize() {
 
   console.log('⬇  Installing Plugins...');
   await readAndRequireFiles(path.join(__dirname, '/source/'));
-  await getandRequirePlugins();
   console.log('✅ Plugins Installed!');
 
   const WhatsAppBot = require('./lib/bot');
