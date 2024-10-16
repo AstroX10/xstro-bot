@@ -1,4 +1,4 @@
-const { getBuffer, writeExifWebp } = require('../utils');
+const { getBuffer, writeExifWebp, imageToWebp, writeExifVid, videoToWebp, writeExifImg } = require('../utils');
 const config = require('../config');
 const FileType = require('file-type');
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
@@ -148,57 +148,33 @@ class Handler {
  async edit(text, opt = {}) {
   return this.client.sendMessage(this.jid, { text, edit: this.key }, opt);
  }
- async sendMessage(jid, content, opt = { quoted: this.data }, type = 'text') {
-  const sendMedia = async (mediaType, mediaContent) => {
-   const isBuffer = Buffer.isBuffer(mediaContent);
-   const isUrl = typeof mediaContent === 'string' && mediaContent.startsWith('http');
-   return this.client.sendMessage(opt.jid || this.jid, {
-    [mediaType]: isBuffer ? mediaContent : isUrl ? { url: mediaContent } : mediaContent,
-    ...opt,
-   });
-  };
-
-  const sendFunctions = {
-   text: () => this.client.sendMessage(jid || this.jid, { text: content, ...opt }),
-   image: () => sendMedia('image', content),
-   video: () => sendMedia('video', content),
-   audio: () => sendMedia('audio', content),
-   sticker: async () => {
-    const { data, mime } = await this.client.getFile(content);
-    if (mime === 'image/webp') {
-     const buff = await writeExifWebp(data, opt);
-     return this.client.sendMessage(jid || this.jid, { sticker: { url: buff }, ...opt });
-    }
-    return this.client.sendImageAsSticker(this.jid, content, opt);
-   },
-   document: () => sendMedia('document', content, { ...opt, mimetype: opt.mimetype || 'application/octet-stream' }),
-   location: () => this.client.sendMessage(jid || this.jid, { location: content, ...opt }),
-   contact: () =>
-    this.client.sendMessage(jid || this.jid, {
-     contacts: {
-      displayName: content.name,
-      contacts: [{ vcard: content.vcard }],
-     },
-     ...opt,
-    }),
-  };
-
-  const message = await (
-   sendFunctions[type.toLowerCase()] ||
-   (() => {
-    throw new Error('Unsupported message type');
-   })
-  )();
-
-  return new Handler(this.client, message);
+ async sendImageAsSticker(jid, buff, options = {}) {
+  let buffer;
+  if (options && (options.packname || options.author)) {
+   buffer = await writeExifImg(buff, options);
+  } else {
+   buffer = await imageToWebp(buff);
+  }
+  await this.client.sendMessage(jid, { sticker: { url: buffer }, ...options }, options);
  }
+
+ async sendVideoAsSticker(jid, buff, options = {}) {
+  let buffer;
+  if (options && (options.packname || options.author)) {
+   buffer = await writeExifVid(buff, options);
+  } else {
+   buffer = await videoToWebp(buff);
+  }
+  await this.client.sendMessage(jid, { sticker: { url: buffer }, ...options }, options);
+ }
+
  async send(content, options = {}) {
   const jid = options.jid || this.jid;
 
   const getContentBuffer = async (content) => {
    if (Buffer.isBuffer(content)) return content;
    if (typeof content === 'string' && content.startsWith('http')) {
-    return getBuffer(content); // Assuming this function exists to fetch the content
+    return getBuffer(content);
    }
    return Buffer.from(content);
   };
@@ -208,62 +184,17 @@ class Handler {
    return fileType ? fileType.mime : 'application/octet-stream';
   };
 
-  const convertContent = async (buffer, fromType, toType) => {
-   if (toType === 'sticker') {
-    if (!options.packname || !options.author) {
-     throw new Error('Packname and author must be provided for stickers.');
-    }
-
-    // Use wa-sticker-formatter to create a sticker
-    const sticker = new Sticker(buffer, {
-     pack: options.packname,
-     author: options.author,
-     type: StickerTypes.FULL, // FULL or CROPPED
-     quality: 80, // Sticker quality (0-100)
-    });
-
-    return await sticker.toBuffer(); // Return the sticker buffer
-   }
-
-   // Fallback to ffmpeg for other media conversions
-   const tempInput = path.join(os.tmpdir(), `input_${Date.now()}`);
-   const tempOutput = path.join(os.tmpdir(), `output_${Date.now()}`);
-
-   await fs.promises.writeFile(tempInput, buffer);
-
-   return new Promise((resolve, reject) => {
-    ffmpeg(tempInput)
-     .toFormat(toType.split('/')[1])
-     .on('end', async () => {
-      const outputBuffer = await fs.readFile(tempOutput);
-      await fs.promises.unlink(tempInput);
-      await fs.promises.unlink(tempOutput);
-      resolve(outputBuffer);
-     })
-     .on('error', async (err) => {
-      await fs.promises.unlink(tempInput);
-      reject(new Error(`Conversion failed: ${err.message}`));
-     })
-     .save(tempOutput);
-   });
-  };
-
   try {
    let buffer = await getContentBuffer(content);
    let mimeType = await detectMimeType(buffer);
 
-   if (options.type && options.type !== mimeType.split('/')[0]) {
-    try {
-     if (options.type === 'sticker') {
-      // Force conversion to sticker using wa-sticker-formatter
-      buffer = await convertContent(buffer, mimeType, 'sticker');
-      mimeType = 'image/webp'; // Stickers are in WebP format
-     } else {
-      buffer = await convertContent(buffer, mimeType, `${options.type}/generic`);
-      mimeType = await detectMimeType(buffer);
-     }
-    } catch (conversionError) {
-     throw new Error(`Conversion failed: ${conversionError.message}`);
+   const contentType = options.type || mimeType.split('/')[0];
+
+   if (contentType === 'sticker' || options.asSticker) {
+    if (mimeType.startsWith('image/')) {
+     return this.sendImageAsSticker(jid, buffer, options);
+    } else if (mimeType.startsWith('video/')) {
+     return this.sendVideoAsSticker(jid, buffer, options);
     }
    }
 
@@ -271,28 +202,14 @@ class Handler {
     image: { image: buffer },
     video: { video: buffer },
     audio: { audio: buffer, mimetype: 'audio/mp4' },
-    sticker: { sticker: buffer },
     document: { document: buffer, mimetype: mimeType, fileName: options.filename || 'file' },
    };
-
-   const contentType = options.type || mimeType.split('/')[0];
-   const isSticker = mimeType === 'image/webp';
 
    let sendOptions = {
     quoted: this.data,
     caption: options.caption,
     contextInfo: options.contextInfo,
    };
-
-   if (isSticker) {
-    if (!options.packname || !options.author) throw new Error('Packname and author must be provided for stickers.');
-
-    return this.client.sendMessage(jid, {
-     sticker: buffer,
-     packname: options.packname,
-     author: options.author,
-    });
-   }
 
    if (contentType === 'text' || !messageContent[contentType]) {
     return this.client.sendMessage(jid, { text: buffer.toString(), ...sendOptions });
