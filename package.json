@@ -3,6 +3,10 @@
  "version": "0.0.1",
  "description": "Simple WhatsApp Bot",
  "main": "index.js",
+ "scripts": {
+  "start": "pm2 start . --attach --name xstro",
+  "stop": "pm2 stop xstro"
+ },
  "author": "AstroX10",
  "dependencies": {
   "@ffmpeg-installer/ffmpeg": "^1.1.0",
