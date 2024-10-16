@@ -13,6 +13,7 @@ class Handler {
  constructor(client, data) {
   this.client = client;
   this._patch(data);
+  this.outputDir = path.join(__dirname, '..', 'temp');
  }
 
  _patch(data) {
