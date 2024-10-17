@@ -84,10 +84,8 @@ class Handler {
  }
 
  _processQuotedMessage(quoted) {
-  const quotedKey = quoted.key;
   const quotedMessage = quoted.message;
   const quotedContextInfo = quotedMessage?.extendedTextMessage?.contextInfo || quotedMessage?.contextInfo || {};
-  const senderJID = quoted.sender;
   const mediaType = this._getMediaType(quotedMessage);
 
   const isImage = mediaType === 'image' || Boolean(quotedMessage?.imageMessage);
@@ -97,22 +95,21 @@ class Handler {
   const isSticker = mediaType === 'sticker' || Boolean(quotedMessage?.stickerMessage);
 
   this.reply_message = {
-   key: quotedKey,
+   data: quoted Message,
+   key: quoted.key,
    jid: quotedKey.remoteJid,
-   type: quoted.type || 'extendedTextMessage',
-   id: quotedKey.id,
-   senderName: quoted.pushName,
-   sender: senderJID,
+   type: quoted.type,
+   id: quoted.key.id,
+   sender: quoted.sender,
    mention: quotedContextInfo.mentionedJid || [],
    fromMe: quotedKey.fromMe,
-   isOwner: quotedKey.remoteJid === this.sudo || quotedKey.fromMe,
+   owner: quotedKey.remoteJid === this.sudo || quotedKey.fromMe,
    contextInfo: quotedContextInfo || {},
-   messageInfo: quotedMessage,
    mediaType: mediaType,
    mediaUrl: this._getMediaUrl(quotedMessage),
-   fileSize: this._getFileSize(quotedMessage),
+   filesize: this._getFileSize(quotedMessage),
    caption: this._getCaption(quotedMessage),
-   isViewOnce: Boolean(quotedMessage?.viewOnceMessage || quotedMessage?.viewOnceMessageV2),
+   viewonce: Boolean(quotedMessage?.viewOnceMessage || quotedMessage?.viewOnceMessageV2),
    image: isImage,
    video: isVideo,
    audio: isAudio,
