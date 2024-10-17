@@ -5,7 +5,6 @@ const { getAntiLink, setAntiLink, deleteAntiLink, AntiWord, addAntiWord, getAnti
 command(
  {
   pattern: 'antilink ?(.*)',
-  fromMe: true,
   desc: 'Set AntiLink on | off | delete | kick',
   type: 'group',
  },
@@ -37,7 +36,7 @@ command(
 command(
  {
   on: 'text',
-  fromMe: false,
+
   dontAddCommandList: true,
  },
  async (message, match, m, client) => {
@@ -65,7 +64,7 @@ command(
 command(
  {
   pattern: 'antiword ?(.*)',
-  fromMe: true,
+
   desc: 'Add or remove forbidden words',
   type: 'group',
  },
@@ -112,7 +111,7 @@ command(
 command(
  {
   on: 'text',
-  fromMe: false,
+
   dontAddCommandList: true,
  },
  async (message, match, m, client) => {

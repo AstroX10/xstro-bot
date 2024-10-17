@@ -5,7 +5,6 @@ const { WARN_COUNT } = require('../config');
 command(
  {
   pattern: 'pause',
-  fromMe: true,
   desc: 'Pause the chat',
   type: 'user',
  },
@@ -19,7 +18,6 @@ command(
 command(
  {
   pattern: 'resume',
-  fromMe: true,
   desc: 'Resume the paused chat',
   dontAddCommandList: true,
  },
@@ -38,7 +36,6 @@ command(
 command(
  {
   pattern: 'warn',
-  fromMe: true,
   desc: 'Warn a user',
   type: 'user',
  },
@@ -63,7 +60,6 @@ command(
 command(
  {
   pattern: 'rwarn',
-  fromMe: true,
   desc: 'Reset warnings for a user',
   type: 'user',
  },
@@ -78,7 +74,6 @@ command(
 command(
  {
   pattern: 'filter',
-  fromMe: true,
   desc: 'Adds a filter.',
   type: 'user',
  },
@@ -105,7 +100,6 @@ command(
 command(
  {
   pattern: 'fstop',
-  fromMe: true,
   desc: 'Stops a previously added filter.',
   type: 'user',
  },
@@ -123,7 +117,6 @@ command(
 command(
  {
   on: 'text',
-  fromMe: false,
   dontAddCommandList: true,
  },
  async (message, match) => {

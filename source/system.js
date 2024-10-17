@@ -5,7 +5,6 @@ const { runtime } = require('../utils');
 command(
  {
   pattern: 'ping',
-  fromMe: false,
   desc: 'To check ping',
   type: 'system',
  },
@@ -20,7 +19,6 @@ command(
 command(
  {
   pattern: 'menu',
-  fromMe: false,
   description: 'Show All Commands',
   dontAddCommandList: true,
  },
@@ -69,7 +67,6 @@ command(
 command(
  {
   pattern: 'list',
-  fromMe: false,
   description: 'Show All Commands',
   dontAddCommandList: true,
  },

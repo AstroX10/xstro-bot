@@ -5,7 +5,6 @@ const path = require('path');
 command(
  {
   pattern: 'temp',
-  fromMe: false,
   desc: 'Clean temp folder',
   type: 'tools',
  },

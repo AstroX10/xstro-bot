@@ -4,7 +4,7 @@ const { loadMessage } = require('../db');
 command(
  {
   pattern: 'vv ?(.*)',
-  fromMe: false,
+  
   desc: 'Downloads ViewOnce Messages',
   type: 'whatsapp',
  },
@@ -19,7 +19,7 @@ command(
 command(
  {
   pattern: 'setpp ?(.*)',
-  fromMe: true,
+  
   desc: 'change WhatsApp profile Picture',
   type: 'whatsapp',
  },
@@ -33,7 +33,7 @@ command(
 command(
  {
   pattern: 'setname',
-  fromMe: true,
+  
   desc: 'Set User name',
   type: 'whatsapp',
  },
@@ -48,7 +48,7 @@ command(
 command(
  {
   pattern: 'block',
-  fromMe: true,
+  
   desc: 'Block a person',
   type: 'whatsapp',
  },
@@ -70,7 +70,7 @@ command(
 command(
  {
   pattern: 'unblock',
-  fromMe: true,
+  
   desc: 'Unblocks a person',
   type: 'whatsapp',
  },
@@ -92,7 +92,7 @@ command(
 command(
  {
   pattern: 'jid',
-  fromMe: true,
+  
   desc: 'Give jid of chat/user',
   type: 'whatsapp',
  },
@@ -105,7 +105,7 @@ command(
 command(
  {
   pattern: 'dlt',
-  fromMe: true,
+  
   desc: 'Deletes your message or a replied message',
   type: 'whatsapp',
  },
@@ -118,7 +118,7 @@ command(
 command(
  {
   pattern: 'edit ?(.*)',
-  fromMe: true,
+  
   desc: 'Edit message sent by the command',
   type: 'whatsapp',
  },
@@ -132,7 +132,7 @@ command(
 command(
  {
   pattern: 'quoted',
-  fromMe: false,
+  
   desc: 'quoted message',
   type: 'whatsapp',
  },
@@ -150,7 +150,7 @@ command(
 command(
  {
   pattern: 'clear ?(.*)',
-  fromMe: true,
+  
   desc: 'delete whatsapp chat',
   type: 'whatsapp',
  },
@@ -174,7 +174,7 @@ command(
 command(
  {
   pattern: 'archive ?(.*)',
-  fromMe: true,
+  
   desc: 'archive whatsapp chat',
   type: 'whatsapp',
  },
@@ -198,7 +198,7 @@ command(
 command(
  {
   pattern: 'unarchive ?(.*)',
-  fromMe: true,
+  
   desc: 'unarchive whatsapp chat',
   type: 'whatsapp',
  },
@@ -222,7 +222,7 @@ command(
 command(
  {
   pattern: 'pin',
-  fromMe: true,
+  
   desc: 'pin a chat',
   type: 'whatsapp',
  },
@@ -240,7 +240,7 @@ command(
 command(
  {
   pattern: 'unpin ?(.*)',
-  fromMe: true,
+  
   desc: 'unpin a msg',
   type: 'whatsapp',
  },
@@ -258,7 +258,7 @@ command(
 command(
  {
   pattern: 'forward ?(.*)',
-  fromMe: false,
+  
   desc: 'Forwards the replied message (any type) with quote',
   type: 'whatsapp',
  },
@@ -283,7 +283,7 @@ command(
 command(
  {
   pattern: 'save ?(.*)',
-  fromMe: true,
+  
   desc: 'Saves WhatsApp Status',
   type: 'whatsapp',
  },

@@ -4,7 +4,6 @@ const { webp2mp4, textToImg } = require('../utils');
 command(
  {
   pattern: 'sticker',
-  fromMe: false,
   desc: 'Converts Photo/video/text to sticker',
   type: 'converter',
  },
@@ -24,7 +23,7 @@ command(
 command(
  {
   pattern: 'take',
-  fromMe: false,
+  
   desc: 'Converts Photo or video to sticker',
   type: 'converter',
  },
@@ -40,7 +39,7 @@ command(
 command(
  {
   pattern: 'photo',
-  fromMe: false,
+  
   desc: 'Changes sticker to Photo',
   type: 'converter',
  },
@@ -54,7 +53,7 @@ command(
 command(
  {
   pattern: 'mp3',
-  fromMe: false,
+  
   desc: 'converts video/voice to mp3',
   type: 'converter',
  },
@@ -70,7 +69,7 @@ command(
 command(
  {
   pattern: 'mp4',
-  fromMe: false,
+  
   desc: 'converts video/voice to mp4',
   type: 'converter',
  },
@@ -89,7 +88,7 @@ command(
 command(
  {
   pattern: 'img',
-  fromMe: false,
+  
   desc: 'Converts Sticker to image',
   type: 'converter',
  },

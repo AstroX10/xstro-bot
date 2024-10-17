@@ -3,7 +3,7 @@ const { command } = require('../lib');
 command(
  {
   pattern: 'button',
-  fromMe: true,
+  
   desc: 'Send a button message',
   usage: '#button <text>',
   type: 'message',

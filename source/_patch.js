@@ -4,7 +4,6 @@ const util = require('util');
 command(
  {
   on: 'text',
-  fromMe: true,
   dontAddCommandList: true,
  },
  async (message, match, m, client) => {
@@ -43,7 +42,6 @@ command(
 command(
  {
   on: 'text',
-  fromMe: true,
   dontAddCommandList: true,
  },
  async (message, match, m, client) => {

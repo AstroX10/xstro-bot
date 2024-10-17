@@ -1,18 +1,15 @@
 const { command } = require('../lib');
 const { parsedJid } = require('../lib');
 
-// isAdmin function to check if the user or bot is an admin in the group
 async function isAdmin(groupJid, userJid, client) {
  const metadata = await client.groupMetadata(groupJid);
  const participant = metadata.participants.find((p) => p.id === userJid);
  return participant?.admin === 'admin' || participant?.admin === 'superadmin';
 }
 
-// Command to add a person to the group
 command(
  {
   pattern: 'add',
-  fromMe: true,
   desc: 'Add a person to group',
   type: 'group',
  },
@@ -34,11 +31,9 @@ command(
  }
 );
 
-// Command to kick a person from the group
 command(
  {
   pattern: 'kick',
-  fromMe: true,
   desc: 'Kick a person from group',
   type: 'group',
  },
@@ -60,11 +55,9 @@ command(
  }
 );
 
-// Command to promote a user to admin
 command(
  {
   pattern: 'promote',
-  fromMe: true,
   desc: 'Promote to admin',
   type: 'group',
  },
@@ -86,11 +79,9 @@ command(
  }
 );
 
-// Command to demote an admin
 command(
  {
   pattern: 'demote',
-  fromMe: true,
   desc: 'Demote from admin',
   type: 'group',
  },
@@ -112,11 +103,9 @@ command(
  }
 );
 
-// Command to mute the group
 command(
  {
   pattern: 'mute',
-  fromMe: true,
   desc: 'Mute group',
   type: 'group',
  },
@@ -131,11 +120,9 @@ command(
  }
 );
 
-// Command to unmute the group
 command(
  {
   pattern: 'unmute',
-  fromMe: true,
   desc: 'Unmute group',
   type: 'group',
  },
@@ -150,11 +137,9 @@ command(
  }
 );
 
-// Command to get the JID of all group members
 command(
  {
   pattern: 'gjid',
-  fromMe: true,
   desc: 'Get JIDs of all group members',
   type: 'group',
  },
@@ -174,11 +159,9 @@ command(
  }
 );
 
-// Command to mention all users in the group
 command(
  {
   pattern: 'tagall',
-  fromMe: true,
   desc: 'Mention all users in group',
   type: 'group',
  },
@@ -198,11 +181,9 @@ command(
  }
 );
 
-// Command to tag specific users with a custom message
 command(
  {
   pattern: 'tag',
-  fromMe: true,
   desc: 'Tag users with custom message',
   type: 'group',
  },
