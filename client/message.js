@@ -83,40 +83,32 @@ class Handler {
   if (data.quoted) this._processQuotedMessage(data.quoted);
  }
 
- _processQuotedMessage(quoted) {
-  const quotedMessage = quoted.message;
-  const quotedContextInfo = quotedMessage?.extendedTextMessage?.contextInfo || quotedMessage?.contextInfo || {};
-  const mediaType = this._getMediaType(quotedMessage);
-
-  const isImage = mediaType === 'image' || Boolean(quotedMessage?.imageMessage);
-  const isVideo = mediaType === 'video' || Boolean(quotedMessage?.videoMessage);
-  const isAudio = mediaType === 'audio' || Boolean(quotedMessage?.audioMessage);
-  const isDocument = mediaType === 'document' || Boolean(quotedMessage?.documentMessage);
-  const isSticker = mediaType === 'sticker' || Boolean(quotedMessage?.stickerMessage);
-
+_processQuotedMessage(quoted) {
   this.reply_message = {
-   data: quoted.message,
-   key: quoted.key,
-   jid: quoted.key.remoteJid,
-   type: quoted.type,
-   id: quoted.key.id,
-   sender: quoted.sender,
-   mention: quotedContextInfo.mentionedJid || [],
-   fromMe: quotedKey.fromMe,
-   owner: quotedKey.remoteJid === this.sudo || quotedKey.fromMe,
-   contextInfo: quotedContextInfo || {},
-   mediaType: mediaType,
-   mediaUrl: this._getMediaUrl(quotedMessage),
-   filesize: this._getFileSize(quotedMessage),
-   caption: this._getCaption(quotedMessage),
-   viewonce: Boolean(quotedMessage?.viewOnceMessage || quotedMessage?.viewOnceMessageV2),
-   image: isImage,
-   video: isVideo,
-   audio: isAudio,
-   document: isDocument,
-   sticker: isSticker,
+    data: quoted.message,
+    key: quoted.key,
+    jid: quoted.key.remoteJid,
+    type: quoted.type,
+    id: quoted.key.id,
+    sender: quoted.sender,
+    mention: quoted.message?.extendedTextMessage?.contextInfo?.mentionedJid ||
+             quoted.message?.contextInfo?.mentionedJid || [],
+    fromMe: quoted.key.fromMe,
+    owner: quoted.key.remoteJid === this.sudo || quoted.key.fromMe,
+    contextInfo: quoted.message?.extendedTextMessage?.contextInfo || 
+                 quoted.message?.contextInfo || {},
+    mediaType: this._getMediaType(quoted.message),
+    mediaUrl: this._getMediaUrl(quoted.message),
+    filesize: this._getFileSize(quoted.message),
+    caption: this._getCaption(quoted.message),
+    viewonce: Boolean(quoted.message?.viewOnceMessage || quoted.message?.viewOnceMessageV2),
+    image: this._getMediaType(quoted.message) === 'image' || Boolean(quoted.message?.imageMessage),
+    video: this._getMediaType(quoted.message) === 'video' || Boolean(quoted.message?.videoMessage),
+    audio: this._getMediaType(quoted.message) === 'audio' || Boolean(quoted.message?.audioMessage),
+    document: this._getMediaType(quoted.message) === 'document' || Boolean(quoted.message?.documentMessage),
+    sticker: this._getMediaType(quoted.message) === 'sticker' || Boolean(quoted.message?.stickerMessage),
   };
- }
+}
 
  _getMediaType(message) {
   const mediaTypes = {
