@@ -1,3 +1,4 @@
+const { tiny } = require('xstro');
 const { command, commands } = require('../lib');
 const { runtime } = require('../utils');
 
@@ -61,7 +62,7 @@ command(
    .forEach((category) => {
     menuText += `\n╭── *${category}* ────\n│ ${categorized[category].sort().join('\n│ ')}\n╰──────────────\n`;
    });
-  return message.send(menuText);
+  return message.send(tiny(menuText));
  }
 );
 
@@ -90,6 +91,6 @@ command(
    commandListText += `\`\`\`${index + 1} ${name.trim()}\`\`\`\n`;
    commandListText += `Use: \`\`\`${description}\`\`\`\n\n`;
   });
-  return await message.reply(commandListText);
+  return await message.reply(tiny(commandListText));
  }
 );
