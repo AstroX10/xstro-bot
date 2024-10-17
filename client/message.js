@@ -95,7 +95,7 @@ class Handler {
   const isSticker = mediaType === 'sticker' || Boolean(quotedMessage?.stickerMessage);
 
   this.reply_message = {
-   data: quoted Message,
+   data: quoted.message,
    key: quoted.key,
    jid: quotedKey.remoteJid,
    type: quoted.type,
