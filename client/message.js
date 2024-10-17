@@ -97,7 +97,7 @@ class Handler {
   this.reply_message = {
    data: quoted.message,
    key: quoted.key,
-   jid: quotedKey.remoteJid,
+   jid: quoted.key.remoteJid,
    type: quoted.type,
    id: quoted.key.id,
    sender: quoted.sender,
