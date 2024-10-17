@@ -91,6 +91,6 @@ command(
    commandListText += `\`\`\`${index + 1} ${name.trim()}\`\`\`\n`;
    commandListText += `Use: \`\`\`${description}\`\`\`\n\n`;
   });
-  return await message.reply(tiny(commandListText));
+  return await message.send(tiny(commandListText));
  }
 );
