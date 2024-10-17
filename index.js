@@ -1,6 +1,8 @@
 const fs = require('fs').promises;
 const path = require('path');
 const config = require('./config');
+const { createSession } = require('./client');
+
 async function readAndRequireFiles(directory) {
  try {
   const files = await fs.readdir(directory);
@@ -13,6 +15,7 @@ async function readAndRequireFiles(directory) {
 
 async function initialize() {
  try {
+  await createSession(config.SESSION_ID);
   await readAndRequireFiles(path.join(__dirname, '/db/'));
   console.log('Syncing Database');
   await config.DATABASE.sync();

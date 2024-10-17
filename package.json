@@ -25,6 +25,7 @@
   "sharp": "^0.32.6",
   "simple-git": "^3.24.0",
   "sqlite3": "^5.1.7",
+  "unzipper": "^0.12.3",
   "xstro": "git+https://github.com/AstroX10/xstro-api.git"
  }
 }
