@@ -84,7 +84,6 @@ class Handler {
  }
 
  _processQuotedMessage(quoted) {
-  const participantJID = quoted.message?.extendedTextMessage?.contextInfo?.participant || quoted.message?.contextInfo?.participant || quoted.sender;
   this.reply_message = {
    data: quoted.message,
    key: quoted.key,
@@ -92,6 +91,7 @@ class Handler {
    type: quoted.type,
    id: quoted.key.id,
    sender: quoted.sender,
+   participant: quoted.participant,
    mention: quoted.message?.extendedTextMessage?.contextInfo?.mentionedJid || quoted.message?.contextInfo?.mentionedJid || [],
    fromMe: quoted.key.fromMe,
    owner: quoted.key.remoteJid === this.sudo || quoted.key.fromMe,
@@ -106,8 +106,8 @@ class Handler {
    audio: this._getMediaType(quoted.message) === 'audio' || Boolean(quoted.message?.audioMessage),
    document: this._getMediaType(quoted.message) === 'document' || Boolean(quoted.message?.documentMessage),
    sticker: this._getMediaType(quoted.message) === 'sticker' || Boolean(quoted.message?.stickerMessage),
-   participant: participantJID,
   };
+  this.reply_message.senderJid = this.reply_message.participant || this.reply_message.sender;
  }
 
  _getMediaType(message) {
