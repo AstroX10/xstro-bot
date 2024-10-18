@@ -5,7 +5,7 @@ const path = require('path');
 const FileType = require('file-type');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
-const { getBuffer, imageToWebp, writeExifVid, videoToWebp, writeExifImg, toAudio, toVideo } = require('../utils');
+const { getBuffer, imageToWebp, writeExifVid, videoToWebp, writeExifImg, toAudio } = require('../utils');
 const { getDevice, downloadContentFromMessage, jidDecode } = require('baileys');
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -250,10 +250,6 @@ class Handler {
    return this.client.sendMessage(jid, { sticker: stickerBuffer, ...options });
   };
 
-  const convertToPlayableVideo = async (buffer) => {
-   return toVideo(buffer);
-  };
-
   try {
    const buffer = await ensureBuffer(content);
    const mimeType = await detectMimeType(buffer);
@@ -278,8 +274,7 @@ class Handler {
      if (options.asAudio) {
       return sendVideoAsAudio(buffer, sendOptions);
      }
-     const playableVideo = await convertToPlayableVideo(buffer);
-     return sendVideo(playableVideo, sendOptions);
+     return sendVideo(buffer, sendOptions);
     case 'audio':
      return sendAudio(buffer, sendOptions);
     case 'document':
@@ -290,7 +285,7 @@ class Handler {
      return sendDocument(buffer, { ...sendOptions, mimetype: mimeType });
    }
   } catch (error) {
-   console.error('Invalid Media Type:', error);
+   console.error('Invaild Media Type:', error);
    return;
   }
  }
