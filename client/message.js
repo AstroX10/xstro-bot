@@ -252,8 +252,6 @@ class Handler {
   try {
    const buffer = await ensureBuffer(content);
    const mimeType = await detectMimeType(buffer);
-   console.log('Detected MIME Type:', mimeType);
-
    const contentType = options.type || mimeType.split('/')[0];
 
    const sendOptions = {
@@ -286,8 +284,8 @@ class Handler {
      return sendDocument(buffer, { ...sendOptions, mimetype: mimeType });
    }
   } catch (error) {
-   console.error('Error in send function:', error);
-   throw error;
+   console.error('Invaild Media Type:', error);
+   return;
   }
  }
 
