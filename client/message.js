@@ -168,6 +168,14 @@ class Handler {
    return Buffer.from(content);
   };
 
+  const ensureBuffer = async (input) => {
+   const buffer = await getContentBuffer(input);
+   if (!Buffer.isBuffer(buffer)) {
+    throw new Error('Failed to convert content to a valid buffer.');
+   }
+   return buffer;
+  };
+
   const detectMimeType = async (buffer) => {
    try {
     const fileType = await FileType.fromBuffer(buffer);
@@ -230,11 +238,7 @@ class Handler {
   };
 
   try {
-   const buffer = await getContentBuffer(content);
-   if (!Buffer.isBuffer(buffer)) {
-    throw new Error('Failed to retrieve a valid buffer from the content.');
-   }
-
+   const buffer = await ensureBuffer(content);
    const mimeType = await detectMimeType(buffer);
    console.log('Detected MIME Type:', mimeType);
 
