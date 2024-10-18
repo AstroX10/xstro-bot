@@ -87,11 +87,8 @@ class Handler {
   this.reply_message = {
    data: quoted.message,
    key: quoted.key,
-   jid: quoted.key.remoteJid,
-   type: quoted.type,
    id: quoted.key.id,
    fromMe: quoted.key.fromMe,
-   owner: quoted.key.remoteJid === this.sudo || quoted.key.fromMe,
    contextInfo: quoted.message?.extendedTextMessage?.contextInfo || quoted.message?.contextInfo || {},
    mediaType: this._getMediaType(quoted.message),
    mediaUrl: this._getMediaUrl(quoted.message),
@@ -104,7 +101,8 @@ class Handler {
    document: this._getMediaType(quoted.message) === 'document' || Boolean(quoted.message?.documentMessage),
    sticker: this._getMediaType(quoted.message) === 'sticker' || Boolean(quoted.message?.stickerMessage),
   };
-  this.reply_message.senderJid = quoted.key.participant || quoted.key.remoteJid;
+  this.reply_message.participant = quoted.key.participant || quoted.participant || quoted.key.remoteJid;
+  this.reply_message.groupJid = quoted.key.remoteJid.includes('@g.us') ? quoted.key.remoteJid : null;
   this.reply_message.mention = quoted.message?.extendedTextMessage?.contextInfo?.mentionedJid || quoted.message?.contextInfo?.mentionedJid || [];
  }
 
