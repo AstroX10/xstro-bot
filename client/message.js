@@ -187,11 +187,11 @@ class Handler {
     return this.client.sendMessage(
      jid,
      {
-      audio: { buffer: audioBuffer },
+      audio: audioBuffer,
       mimetype: 'audio/mp4',
       ...options,
      },
-     options
+     { ...options }
     );
    } catch (error) {
     console.error('Error sending video as audio:', error);
@@ -208,7 +208,7 @@ class Handler {
     } else {
      stickerBuffer = await imageToWebp(buffer); // Convert image to sticker format
     }
-    return this.client.sendMessage(jid, { sticker: { url: stickerBuffer }, ...options }, options);
+    return this.client.sendMessage(jid, { sticker: stickerBuffer, ...options }, { ...options });
    } catch (error) {
     console.error('Error sending image as sticker:', error);
     throw new Error('Failed to send image as sticker.');
@@ -224,7 +224,7 @@ class Handler {
     } else {
      stickerBuffer = await videoToWebp(buffer); // Convert video to sticker format
     }
-    return this.client.sendMessage(jid, { sticker: { url: stickerBuffer }, ...options }, options);
+    return this.client.sendMessage(jid, { sticker: stickerBuffer, ...options }, { ...options });
    } catch (error) {
     console.error('Error sending video as sticker:', error);
     throw new Error('Failed to send video as sticker.');
@@ -275,7 +275,7 @@ class Handler {
   }
 
   // Send the message based on determined content type
-  return this.client.sendMessage(jid, { ...messageContent[contentType], ...sendOptions });
+  return this.client.sendMessage(jid, { ...messageContent[contentType], ...sendOptions }, { ...options });
  }
  async download(message) {
   const msg = message || this.reply_message?.messageInfo;
