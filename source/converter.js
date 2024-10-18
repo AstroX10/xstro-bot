@@ -1,5 +1,5 @@
 const { command } = require('../lib');
-const { getBuffer } = require('../utils');
+const fs = require('fs');
 const { STICKER_PACK } = require('../config');
 
 command(
@@ -76,6 +76,7 @@ command(
  async (message) => {
   if (!message.reply_message?.sticker) return await message.reply('_Reply A Sticker_');
   const mp4 = await message.download(message.reply_message.data);
-  return await message.send(mp4.buffer, { type: 'video' });
+  const path = fs.readFileSync(mp4.filePath);
+  return await message.send(path, { type: 'video' });
  }
 );
