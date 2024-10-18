@@ -324,7 +324,11 @@ class Handler {
   const filePath = path.join(this.outputDir, fileName);
 
   await fs.mkdir(this.outputDir, { recursive: true });
-  await fs.writeFile(filePath, buffer);
+  if (fileExtension === 'webp') {
+   await fs.writeFile(filePath, buffer);
+  } else {
+   await fs.writeFile(filePath, buffer);
+  }
 
   return {
    buffer,
@@ -343,6 +347,7 @@ class Handler {
    'video/mp4': 'mp4',
    'audio/ogg; codecs=opus': 'ogg',
    'application/pdf': 'pdf',
+   'image/webp': 'webp',
   };
   return extensions[mimeType] || 'bin';
  }
