@@ -47,16 +47,10 @@ command(
   type: 'converter',
  },
  async (message, match) => {
-  const res = message.reply_message?.video || message.reply_message?.sticker || (match.includes('http') && match);
-
+  const res = message.reply_message?.video || message.reply_message?.sticker || (match && String(match).includes('http') && match);
   if (!res) return message.reply('_Reply to a Sticker/Video or provide a valid URL!_');
-
-  let contentBuffer;
-  if (message.reply_message?.video || message.reply_message?.sticker) contentBuffer = await message.download(message.reply_message.data);
-  if (match.includes('http')) {
-   contentBuffer = await getBuffer(match);
-   if (!contentBuffer) return message.reply('_Failed to process the media or URL_');
-   return await message.send(contentBuffer, { type: 'image' });
-  }
+  const contentBuffer = message.reply_message ? await message.download(message.reply_message.data) : await getBuffer(match);
+  if (!contentBuffer) return message.reply('_Failed to process the media or URL_');
+  await message.send(contentBuffer, { type: 'image' });
  }
 );
