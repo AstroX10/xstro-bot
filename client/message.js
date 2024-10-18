@@ -214,24 +214,14 @@ class Handler {
    const audioBuffer = await toAudio(buffer);
    return sendAudio(audioBuffer, options);
   };
-
-  const sendVideoAsSticker = async (buffer, options) => {
-   try {
-    console.log('Starting video to sticker conversion...');
-    let stickerBuffer;
-    if (options.packname || options.author) {
-     console.log('Applying Exif data...');
-     stickerBuffer = await writeExifVid(buffer, options);
-    } else {
-     console.log('Converting video to WebP...');
-     stickerBuffer = await videoToWebp(buffer);
-    }
-    console.log('Sticker created, sending...');
-    return this.client.sendMessage(jid, { sticker: stickerBuffer, ...options });
-   } catch (error) {
-    console.error('Error in sendVideoAsSticker:', error);
-    throw error;
+  const sendVideoAsSticker = async (jid, buff, options = {}) => {
+   let buffer;
+   if (options && (options.packname || options.author)) {
+    buffer = await writeExifVid(buff, options);
+   } else {
+    buffer = await videoToWebp(buff);
    }
+   await this.client.sendMessage(jid, { sticker: { url: buffer }, ...options }, options);
   };
   try {
    const buffer = await getContentBuffer(content);
