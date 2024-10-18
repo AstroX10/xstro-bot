@@ -30,7 +30,7 @@ command(
   if (!isStickerMedia) return message.reply('_Reply A Sticker!_');
   const newSticker = await message.download(message.reply_message.data);
   return message.send(newSticker.buffer, {
-   type: 'sticker',
+   // type: 'sticker',
    author: STICKER_PACK.split(';')[0],
    packname: STICKER_PACK.split(';')[1],
   });
