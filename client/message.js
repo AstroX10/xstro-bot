@@ -212,17 +212,18 @@ class Handler {
   };
 
   const sendSticker = async (buffer, options) => {
-   let stickerBuffer;
-   if (options.packname || options.author) {
+   let stickerBuffer = buffer;
+   const fileType = await FileType.fromBuffer(buffer);
+   const isWebp = fileType?.mime === 'image/webp';
+
+   if (isWebp) {
     stickerBuffer = await writeExifImg(buffer, options);
-    if (typeof stickerBuffer === 'string') {
-     stickerBuffer = await fs.readFile(stickerBuffer);
-    }
+    if (typeof stickerBuffer === 'string') stickerBuffer = await fs.readFile(stickerBuffer);
    } else {
     stickerBuffer = await imageToWebp(buffer);
-    if (typeof stickerBuffer === 'string') {
-     stickerBuffer = await fs.readFile(stickerBuffer);
-    }
+    if (typeof stickerBuffer === 'string') stickerBuffer = await fs.readFile(stickerBuffer);
+    stickerBuffer = await writeExifImg(stickerBuffer, options);
+    if (typeof stickerBuffer === 'string') stickerBuffer = await fs.readFile(stickerBuffer);
    }
    return this.client.sendMessage(jid, { sticker: stickerBuffer, ...options });
   };

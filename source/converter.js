@@ -19,6 +19,9 @@ command(
  }
 );
 
+const { command } = require('../lib');
+const { STICKER_PACK } = require('../config');
+
 command(
  {
   pattern: 'take ?(.*)',
@@ -29,8 +32,10 @@ command(
   const isStickerMedia = message.reply_message?.sticker;
   if (!isStickerMedia) return message.reply('_Reply A Sticker!_');
   const newSticker = await message.download(message.reply_message.data);
+  if (!newSticker.buffer) return message.reply('_Failed to download sticker_');
+
   return message.send(newSticker.buffer, {
-   // type: 'sticker',
+   type: 'sticker',
    author: STICKER_PACK.split(';')[0],
    packname: STICKER_PACK.split(';')[1],
   });
