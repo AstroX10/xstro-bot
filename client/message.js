@@ -90,7 +90,7 @@ class Handler {
    jid: quoted.key.remoteJid,
    type: quoted.type,
    id: quoted.key.id,
-   sender: quoted.sender.jid,
+   sender: quoted.sender,
    mention: quoted.message?.extendedTextMessage?.contextInfo?.mentionedJid || quoted.message?.contextInfo?.mentionedJid || [],
    fromMe: quoted.key.fromMe,
    owner: quoted.key.remoteJid === this.sudo || quoted.key.fromMe,
