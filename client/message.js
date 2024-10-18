@@ -84,6 +84,7 @@ class Handler {
  }
 
  _processQuotedMessage(quoted) {
+  const participantJID = quoted.message?.extendedTextMessage?.contextInfo?.participant || quoted.message?.contextInfo?.participant || quoted.sender;
   this.reply_message = {
    data: quoted.message,
    key: quoted.key,
@@ -105,7 +106,7 @@ class Handler {
    audio: this._getMediaType(quoted.message) === 'audio' || Boolean(quoted.message?.audioMessage),
    document: this._getMediaType(quoted.message) === 'document' || Boolean(quoted.message?.documentMessage),
    sticker: this._getMediaType(quoted.message) === 'sticker' || Boolean(quoted.message?.stickerMessage),
-   participant: this.participant,
+   participant: participantJID,
   };
  }
 
