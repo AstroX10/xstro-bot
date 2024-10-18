@@ -215,8 +215,14 @@ class Handler {
    let stickerBuffer;
    if (options.packname || options.author) {
     stickerBuffer = await writeExifImg(buffer, options);
+    if (typeof stickerBuffer === 'string') {
+     stickerBuffer = await fs.readFile(stickerBuffer);
+    }
    } else {
     stickerBuffer = await imageToWebp(buffer);
+    if (typeof stickerBuffer === 'string') {
+     stickerBuffer = await fs.readFile(stickerBuffer);
+    }
    }
    return this.client.sendMessage(jid, { sticker: stickerBuffer, ...options });
   };
@@ -231,8 +237,14 @@ class Handler {
    let stickerBuffer;
    if (options.packname || options.author) {
     stickerBuffer = await writeExifVid(buffer, options);
+    if (typeof stickerBuffer === 'string') {
+     stickerBuffer = await fs.readFile(stickerBuffer);
+    }
    } else {
     stickerBuffer = await videoToWebp(buffer);
+    if (typeof stickerBuffer === 'string') {
+     stickerBuffer = await fs.readFile(stickerBuffer);
+    }
    }
    return this.client.sendMessage(jid, { sticker: stickerBuffer, ...options });
   };
