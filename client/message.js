@@ -159,8 +159,6 @@ class Handler {
  }
  async send(content, options = {}) {
   const jid = options.jid || this.jid;
-
-  // Function to retrieve the content buffer
   const getContentBuffer = async (content) => {
    if (Buffer.isBuffer(content)) return content;
    if (typeof content === 'string' && content.startsWith('http')) {
@@ -168,8 +166,6 @@ class Handler {
    }
    return Buffer.from(content);
   };
-
-  // Function to detect MIME type from a buffer
   const detectMimeType = async (buffer) => {
    try {
     const fileType = await FileType.fromBuffer(buffer);
@@ -179,8 +175,6 @@ class Handler {
     return 'application/octet-stream';
    }
   };
-
-  // Specific send functions
   const sendText = (text, options) => {
    return this.client.sendMessage(jid, { text, ...options });
   };
@@ -222,16 +216,23 @@ class Handler {
   };
 
   const sendVideoAsSticker = async (buffer, options) => {
-   let stickerBuffer;
-   if (options.packname || options.author) {
-    stickerBuffer = await writeExifVid(buffer, options);
-   } else {
-    stickerBuffer = await videoToWebp(buffer);
+   try {
+    console.log('Starting video to sticker conversion...');
+    let stickerBuffer;
+    if (options.packname || options.author) {
+     console.log('Applying Exif data...');
+     stickerBuffer = await writeExifVid(buffer, options);
+    } else {
+     console.log('Converting video to WebP...');
+     stickerBuffer = await videoToWebp(buffer);
+    }
+    console.log('Sticker created, sending...');
+    return this.client.sendMessage(jid, { sticker: stickerBuffer, ...options });
+   } catch (error) {
+    console.error('Error in sendVideoAsSticker:', error);
+    throw error;
    }
-   return this.client.sendMessage(jid, { sticker: stickerBuffer, ...options });
   };
-
-  // Main send logic
   try {
    const buffer = await getContentBuffer(content);
    if (!buffer) {
