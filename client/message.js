@@ -198,7 +198,7 @@ class Handler {
    return this.client.sendMessage(jid, { video: buffer, ...options });
   };
   async function PlayableVideo(input, opts) {
-   const processed = await toVideo(input);
+   const processed = await toVideo(input, 'mp4');
    return sendVideo(processed, ...opts);
   }
 
