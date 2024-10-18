@@ -64,11 +64,17 @@ const toPTT = (inputBuffer) => {
  * @param {Buffer} buffer Video Buffer
  * @param {String} ext File Extension
  */
-async function toVideo(inputBuffer) {
+async function toVideo(input) {
  const inputFilePath = path.join(tmpdir(), 'input-video');
  const outputFilePath = path.join(tmpdir(), 'output-video.mp4');
 
- fs.writeFileSync(inputFilePath, inputBuffer);
+ if (Buffer.isBuffer(input)) {
+  fs.writeFileSync(inputFilePath, input);
+ } else if (typeof input === 'string') {
+  fs.copyFileSync(input, inputFilePath);
+ } else {
+  throw new Error('Input must be a buffer or a valid file path.');
+ }
 
  return new Promise((resolve, reject) => {
   ffmpeg(inputFilePath)
