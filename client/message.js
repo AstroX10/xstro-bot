@@ -214,21 +214,21 @@ class Handler {
    const audioBuffer = await toAudio(buffer);
    return sendAudio(audioBuffer, options);
   };
-  const sendVideoAsSticker = async (jid, buff, options = {}) => {
-   let buffer;
-   if (options && (options.packname || options.author)) {
-    buffer = await writeExifVid(buff, options);
+
+  const sendVideoAsSticker = async (buffer, options = {}) => {
+   if (!Buffer.isBuffer(buffer)) throw new Error('The input must be a buffer');
+   let stickerBuffer;
+   if (options.packname || options.author) {
+    stickerBuffer = await writeExifVid(buffer, options);
    } else {
-    buffer = await videoToWebp(buff);
+    stickerBuffer = await videoToWebp(buffer);
    }
-   await this.client.sendMessage(jid, { sticker: { url: buffer }, ...options }, options);
+   return this.client.sendMessage(jid, { sticker: stickerBuffer, ...options });
   };
+
   try {
    const buffer = await getContentBuffer(content);
-   if (!buffer) {
-    throw new Error('Failed to retrieve the buffer from the content.');
-   }
-
+   if (!buffer) throw new Error('Failed to retrieve the buffer from the content.');
    const mimeType = await detectMimeType(buffer);
    const contentType = options.type || mimeType.split('/')[0];
 
