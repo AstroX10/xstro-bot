@@ -194,9 +194,12 @@ class Handler {
    return this.client.sendMessage(jid, { image: buffer, ...options });
   };
 
-  async function sendVideo(buffer, options) {
-   const processed = await toVideo(buffer);
-   return this.client.sendMessage(jid, { video: processed, ...options });
+  const sendVideo = (buffer, options) => {
+   return this.client.sendMessage(jid, { video: buffer, ...options });
+  };
+  async function PlayableVideo(input, opts) {
+   const processed = await toVideo(input);
+   return sendVideo(processed, ...opts);
   }
 
   const sendAudio = (buffer, options) => {
@@ -275,7 +278,7 @@ class Handler {
      if (options.asAudio) {
       return sendVideoAsAudio(buffer, sendOptions);
      }
-     return sendVideo(buffer, sendOptions);
+     return PlayableVideo(buffer, sendOptions);
     case 'audio':
      return sendAudio(buffer, sendOptions);
     case 'document':
