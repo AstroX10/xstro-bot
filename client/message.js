@@ -5,7 +5,7 @@ const path = require('path');
 const FileType = require('file-type');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
-const { getBuffer, imageToWebp, writeExifVid, videoToWebp, writeExifImg } = require('../utils');
+const { getBuffer, imageToWebp, writeExifVid, videoToWebp, writeExifImg, toAudio } = require('../utils');
 const { getDevice, downloadContentFromMessage, jidDecode } = require('baileys');
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -83,32 +83,30 @@ class Handler {
   if (data.quoted) this._processQuotedMessage(data.quoted);
  }
 
-_processQuotedMessage(quoted) {
+ _processQuotedMessage(quoted) {
   this.reply_message = {
-    data: quoted.message,
-    key: quoted.key,
-    jid: quoted.key.remoteJid,
-    type: quoted.type,
-    id: quoted.key.id,
-    sender: quoted.sender,
-    mention: quoted.message?.extendedTextMessage?.contextInfo?.mentionedJid ||
-             quoted.message?.contextInfo?.mentionedJid || [],
-    fromMe: quoted.key.fromMe,
-    owner: quoted.key.remoteJid === this.sudo || quoted.key.fromMe,
-    contextInfo: quoted.message?.extendedTextMessage?.contextInfo || 
-                 quoted.message?.contextInfo || {},
-    mediaType: this._getMediaType(quoted.message),
-    mediaUrl: this._getMediaUrl(quoted.message),
-    filesize: this._getFileSize(quoted.message),
-    caption: this._getCaption(quoted.message),
-    viewonce: Boolean(quoted.message?.viewOnceMessage || quoted.message?.viewOnceMessageV2),
-    image: this._getMediaType(quoted.message) === 'image' || Boolean(quoted.message?.imageMessage),
-    video: this._getMediaType(quoted.message) === 'video' || Boolean(quoted.message?.videoMessage),
-    audio: this._getMediaType(quoted.message) === 'audio' || Boolean(quoted.message?.audioMessage),
-    document: this._getMediaType(quoted.message) === 'document' || Boolean(quoted.message?.documentMessage),
-    sticker: this._getMediaType(quoted.message) === 'sticker' || Boolean(quoted.message?.stickerMessage),
+   data: quoted.message,
+   key: quoted.key,
+   jid: quoted.key.remoteJid,
+   type: quoted.type,
+   id: quoted.key.id,
+   sender: quoted.sender,
+   mention: quoted.message?.extendedTextMessage?.contextInfo?.mentionedJid || quoted.message?.contextInfo?.mentionedJid || [],
+   fromMe: quoted.key.fromMe,
+   owner: quoted.key.remoteJid === this.sudo || quoted.key.fromMe,
+   contextInfo: quoted.message?.extendedTextMessage?.contextInfo || quoted.message?.contextInfo || {},
+   mediaType: this._getMediaType(quoted.message),
+   mediaUrl: this._getMediaUrl(quoted.message),
+   filesize: this._getFileSize(quoted.message),
+   caption: this._getCaption(quoted.message),
+   viewonce: Boolean(quoted.message?.viewOnceMessage || quoted.message?.viewOnceMessageV2),
+   image: this._getMediaType(quoted.message) === 'image' || Boolean(quoted.message?.imageMessage),
+   video: this._getMediaType(quoted.message) === 'video' || Boolean(quoted.message?.videoMessage),
+   audio: this._getMediaType(quoted.message) === 'audio' || Boolean(quoted.message?.audioMessage),
+   document: this._getMediaType(quoted.message) === 'document' || Boolean(quoted.message?.documentMessage),
+   sticker: this._getMediaType(quoted.message) === 'sticker' || Boolean(quoted.message?.stickerMessage),
   };
-}
+ }
 
  _getMediaType(message) {
   const mediaTypes = {
@@ -159,26 +157,6 @@ _processQuotedMessage(quoted) {
  async edit(text, opt = {}) {
   return this.client.sendMessage(this.jid, { text, edit: this.key }, opt);
  }
- async sendImageAsSticker(jid, buff, options = {}) {
-  let buffer;
-  if (options && (options.packname || options.author)) {
-   buffer = await writeExifImg(buff, options);
-  } else {
-   buffer = await imageToWebp(buff);
-  }
-  await this.client.sendMessage(jid, { sticker: { url: buffer }, ...options }, options);
- }
-
- async sendVideoAsSticker(jid, buff, options = {}) {
-  let buffer;
-  if (options && (options.packname || options.author)) {
-   buffer = await writeExifVid(buff, options);
-  } else {
-   buffer = await videoToWebp(buff);
-  }
-  await this.client.sendMessage(jid, { sticker: { url: buffer }, ...options }, options);
- }
-
  async send(content, options = {}) {
   const jid = options.jid || this.jid;
 
@@ -195,42 +173,57 @@ _processQuotedMessage(quoted) {
    return fileType ? fileType.mime : 'application/octet-stream';
   };
 
-  try {
-   let buffer = await getContentBuffer(content);
-   let mimeType = await detectMimeType(buffer);
+  const sendVideoAsAudio = async (buffer, options) => {
+   let audioBuffer = await toAudio(buffer);
+   return this.client.sendMessage(jid, { audio: { buffer: audioBuffer }, mimetype: 'audio/mp4', ...options }, options);
+  };
 
-   const contentType = options.type || mimeType.split('/')[0];
-
-   if (contentType === 'sticker' || options.asSticker) {
-    if (mimeType.startsWith('image/')) {
-     return this.sendImageAsSticker(jid, buffer, options);
-    } else if (mimeType.startsWith('video/')) {
-     return this.sendVideoAsSticker(jid, buffer, options);
-    }
+  const sendImageAsSticker = async (buffer, options) => {
+   let stickerBuffer;
+   if (options && (options.packname || options.author)) {
+    stickerBuffer = await writeExifImg(buffer, options);
+   } else {
+    stickerBuffer = await imageToWebp(buffer);
    }
+   return this.client.sendMessage(jid, { sticker: { url: stickerBuffer }, ...options }, options);
+  };
 
-   const messageContent = {
-    image: { image: buffer },
-    video: { video: buffer },
-    audio: { audio: buffer, mimetype: 'audio/mp4' },
-    document: { document: buffer, mimetype: mimeType, fileName: options.filename || 'file' },
-   };
-
-   let sendOptions = {
-    quoted: this.data,
-    caption: options.caption,
-    contextInfo: options.contextInfo,
-   };
-
-   if (contentType === 'text' || !messageContent[contentType]) {
-    return this.client.sendMessage(jid, { text: buffer.toString(), ...sendOptions });
+  const sendVideoAsSticker = async (buffer, options) => {
+   let stickerBuffer;
+   if (options && (options.packname || options.author)) {
+    stickerBuffer = await writeExifVid(buffer, options);
+   } else {
+    stickerBuffer = await videoToWebp(buffer);
    }
+   return this.client.sendMessage(jid, { sticker: { url: stickerBuffer }, ...options }, options);
+  };
+  let buffer = await getContentBuffer(content);
+  let mimeType = await detectMimeType(buffer);
 
-   return this.client.sendMessage(jid, { ...messageContent[contentType], ...sendOptions });
-  } catch (error) {
-   console.error('Error From Send Method', error);
-   throw new Error(`Failed To Send Message: Unsupported!`);
+  const contentType = options.type || mimeType.split('/')[0];
+
+  if (contentType === 'sticker' || options.asSticker) {
+   if (mimeType.startsWith('image/')) {
+    return sendImageAsSticker(buffer, options);
+   } else if (mimeType.startsWith('video/')) {
+    return sendVideoAsSticker(buffer, options);
+   }
   }
+  if (contentType === 'audio' && mimeType.startsWith('video/')) return sendVideoAsAudio(buffer, options);
+
+  const messageContent = {
+   image: { image: buffer },
+   video: { video: buffer },
+   audio: { audio: buffer, mimetype: 'audio/mp4' },
+   document: { document: buffer, mimetype: mimeType, fileName: options.filename || 'file' },
+  };
+  let sendOptions = {
+   quoted: this.data,
+   caption: options.caption,
+   contextInfo: options.contextInfo,
+  };
+  if (contentType === 'text' || !messageContent[contentType]) return this.client.sendMessage(jid, { text: buffer.toString(), ...sendOptions });
+  return this.client.sendMessage(jid, { ...messageContent[contentType], ...sendOptions });
  }
  async download(message) {
   const msg = message || this.reply_message?.messageInfo;

@@ -162,7 +162,7 @@ command(
   const isUserAdmin = await isAdmin(message.jid, message.participant, client);
   if (isUserAdmin) return;
 
-  const isSpam = await checkSpam(message.jid, message.participant, message.text);
+  const isSpam = await checkSpam(message.jid, message.jid, message.text);
   if (isSpam) {
    await client.sendMessage(message.jid, { delete: message.key });
    await message.reply(`@${message.participant.split('@')[0]}, please don't spam!`, {

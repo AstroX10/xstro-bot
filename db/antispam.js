@@ -55,7 +55,7 @@ module.exports = {
  async addMessage(groupJid, sender, message) {
   return await SpamCheck.create({
    groupJid,
-   sender,
+   // sender,
    message,
    timestamp: new Date(),
   });

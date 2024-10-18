@@ -6,6 +6,7 @@ const webp = require('node-webpmux');
 const path = require('path');
 const { fromBuffer } = require('file-type');
 const { Buffer } = require('buffer');
+const { Readable } = require('stream');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 ffmpeg.setFfmpegPath(ffmpegPath);
