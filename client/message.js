@@ -105,7 +105,7 @@ class Handler {
    audio: this._getMediaType(quoted.message) === 'audio' || Boolean(quoted.message?.audioMessage),
    document: this._getMediaType(quoted.message) === 'document' || Boolean(quoted.message?.documentMessage),
    sticker: this._getMediaType(quoted.message) === 'sticker' || Boolean(quoted.message?.stickerMessage),
-   participant: quoted.stanzaId,
+   participant: this.participant,
   };
  }
 
