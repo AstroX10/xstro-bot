@@ -19,9 +19,6 @@ command(
  }
 );
 
-const { command } = require('../lib');
-const { STICKER_PACK } = require('../config');
-
 command(
  {
   pattern: 'take ?(.*)',
