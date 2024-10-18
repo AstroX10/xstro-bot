@@ -8,6 +8,7 @@ const { fromBuffer } = require('file-type');
 const { Buffer } = require('buffer');
 const { Readable } = require('stream');
 const ffmpeg = require('fluent-ffmpeg');
+const { spawn } = require('child_process');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -59,39 +60,41 @@ const toPTT = (inputBuffer) => {
  });
 };
 
+function VideoCon(buffer, args = [], ext = '', ext2 = '') {
+ return new Promise(async (resolve, reject) => {
+  try {
+   let tmp = path.join(tmpdir() + '/' + new Date() + '.' + ext);
+   let out = tmp + '.' + ext2;
+   await fs.promises.writeFile(tmp, buffer);
+   const ffmpegProcess = spawn('ffmpeg', ['-y', '-i', tmp, ...args, out])
+    .on('error', reject)
+    .on('close', async (code) => {
+     try {
+      await fs.promises.unlink(tmp);
+      if (code !== 0) {
+       reject(new Error(`FFmpeg process exited with code ${code}`));
+       return;
+      }
+      const processedData = await fs.promises.readFile(out);
+      await fs.promises.unlink(out);
+      resolve(processedData);
+     } catch (e) {
+      reject(e);
+     }
+    });
+  } catch (e) {
+   reject(e);
+  }
+ });
+}
+
 /**
  * Convert Audio to Playable WhatsApp Video
  * @param {Buffer} buffer Video Buffer
  * @param {String} ext File Extension
  */
-async function toVideo(input) {
- const inputFilePath = path.join(tmpdir(), 'input-video');
- const outputFilePath = path.join(tmpdir(), 'output-video.mp4');
-
- if (Buffer.isBuffer(input)) {
-  fs.writeFileSync(inputFilePath, input);
- } else if (typeof input === 'string') {
-  fs.copyFileSync(input, inputFilePath);
- } else {
-  throw new Error('Input must be a buffer or a valid file path.');
- }
-
- return new Promise((resolve, reject) => {
-  ffmpeg(inputFilePath)
-   .setFfmpegPath(ffmpegPath)
-   .outputOptions(['-c:v libx264', '-c:a aac', '-b:a 128k', '-ar 44100', '-pix_fmt yuv420p', '-movflags +faststart', '-preset fast', '-crf 28', '-vf scale=480:trunc(ow/a/2)*2', '-profile:v baseline'])
-   .on('end', () => {
-    const outputBuffer = fs.readFileSync(outputFilePath);
-    fs.unlinkSync(inputFilePath);
-    fs.unlinkSync(outputFilePath);
-    resolve(outputBuffer);
-   })
-   .on('error', (err) => {
-    fs.unlinkSync(inputFilePath);
-    reject(err);
-   })
-   .save(outputFilePath);
- });
+function toVideo(buffer, ext) {
+ return VideoCon(buffer, ['-vn', '-ac', '2', '-b:a', '128k', '-ar', '44100', '-f', 'mp3'], ext, 'mp3');
 }
 
 async function getBuffer(url, options = {}) {
