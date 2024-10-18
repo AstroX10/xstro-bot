@@ -76,7 +76,6 @@ command(
  async (message) => {
   if (!message.reply_message?.sticker) return await message.reply('_Reply A Sticker_');
   const mp4 = await message.download(message.reply_message.data);
-  const path = fs.readFileSync(mp4.filePath);
-  return await message.send(path, { type: 'video' });
+  return await message.send(mp4.buffer, { type: 'video' });
  }
 );
