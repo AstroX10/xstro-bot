@@ -162,11 +162,11 @@ class Handler {
 
   // Function to retrieve the content buffer
   const getContentBuffer = async (content) => {
-   if (Buffer.isBuffer(content)) return content; // Return buffer directly if already a Buffer
+   if (Buffer.isBuffer(content)) return content;
    if (typeof content === 'string' && content.startsWith('http')) {
-    return await getBuffer(content); // Fetch buffer from URL
+    return await getBuffer(content);
    }
-   return Buffer.from(content); // Convert to Buffer from string
+   return Buffer.from(content);
   };
 
   // Function to detect MIME type from a buffer
@@ -176,106 +176,100 @@ class Handler {
     return fileType ? fileType.mime : 'application/octet-stream';
    } catch (error) {
     console.error('Error detecting MIME type:', error);
-    return 'application/octet-stream'; // Fallback MIME type
+    return 'application/octet-stream';
    }
   };
 
-  // Function to send video as audio
+  // Specific send functions
+  const sendText = (text, options) => {
+   return this.client.sendMessage(jid, { text, ...options });
+  };
+
+  const sendImage = (buffer, options) => {
+   return this.client.sendMessage(jid, { image: buffer, ...options });
+  };
+
+  const sendVideo = (buffer, options) => {
+   return this.client.sendMessage(jid, { video: buffer, ...options });
+  };
+
+  const sendAudio = (buffer, options) => {
+   return this.client.sendMessage(jid, { audio: buffer, mimetype: 'audio/mp4', ...options });
+  };
+
+  const sendDocument = (buffer, options) => {
+   return this.client.sendMessage(jid, {
+    document: buffer,
+    mimetype: options.mimetype || 'application/octet-stream',
+    fileName: options.filename || 'file',
+    ...options,
+   });
+  };
+
+  const sendSticker = async (buffer, options) => {
+   let stickerBuffer;
+   if (options.packname || options.author) {
+    stickerBuffer = await writeExifImg(buffer, options);
+   } else {
+    stickerBuffer = await imageToWebp(buffer);
+   }
+   return this.client.sendMessage(jid, { sticker: stickerBuffer, ...options });
+  };
+
   const sendVideoAsAudio = async (buffer, options) => {
-   try {
-    let audioBuffer = await toAudio(buffer); // Convert video to audio
-    return this.client.sendMessage(
-     jid,
-     {
-      audio: audioBuffer,
-      mimetype: 'audio/mp4',
-      ...options,
-     },
-     { ...options }
-    );
-   } catch (error) {
-    console.error('Error sending video as audio:', error);
-    throw new Error('Failed to send video as audio.');
-   }
+   const audioBuffer = await toAudio(buffer);
+   return sendAudio(audioBuffer, options);
   };
 
-  // Function to send image as sticker
-  const sendImageAsSticker = async (buffer, options) => {
-   try {
-    let stickerBuffer;
-    if (options && (options.packname || options.author)) {
-     stickerBuffer = await writeExifImg(buffer, options); // Create sticker with metadata
-    } else {
-     stickerBuffer = await imageToWebp(buffer); // Convert image to sticker format
-    }
-    return this.client.sendMessage(jid, { sticker: stickerBuffer, ...options }, { ...options });
-   } catch (error) {
-    console.error('Error sending image as sticker:', error);
-    throw new Error('Failed to send image as sticker.');
-   }
-  };
-
-  // Function to send video as sticker
   const sendVideoAsSticker = async (buffer, options) => {
-   try {
-    let stickerBuffer;
-    if (options && (options.packname || options.author)) {
-     stickerBuffer = await writeExifVid(buffer, options); // Create sticker with metadata
-    } else {
-     stickerBuffer = await videoToWebp(buffer); // Convert video to sticker format
-    }
-    return this.client.sendMessage(jid, { sticker: stickerBuffer, ...options }, { ...options });
-   } catch (error) {
-    console.error('Error sending video as sticker:', error);
-    throw new Error('Failed to send video as sticker.');
+   let stickerBuffer;
+   if (options.packname || options.author) {
+    stickerBuffer = await writeExifVid(buffer, options);
+   } else {
+    stickerBuffer = await videoToWebp(buffer);
    }
+   return this.client.sendMessage(jid, { sticker: stickerBuffer, ...options });
   };
 
-  // Get the content buffer
-  let buffer = await getContentBuffer(content);
-  if (!buffer) {
-   throw new Error('Failed to retrieve the buffer from the content.');
-  }
-
-  // Detect MIME type of the buffer
-  let mimeType = await detectMimeType(buffer);
-  const contentType = options.type || mimeType.split('/')[0];
-
-  // Validate content type and determine sending method
-  if (contentType === 'sticker' || options.asSticker) {
-   if (mimeType.startsWith('image/')) {
-    return sendImageAsSticker(buffer, options);
-   } else if (mimeType.startsWith('video/')) {
-    return sendVideoAsSticker(buffer, options);
+  // Main send logic
+  try {
+   const buffer = await getContentBuffer(content);
+   if (!buffer) {
+    throw new Error('Failed to retrieve the buffer from the content.');
    }
+
+   const mimeType = await detectMimeType(buffer);
+   const contentType = options.type || mimeType.split('/')[0];
+
+   const sendOptions = {
+    quoted: this.data,
+    caption: options.caption,
+    contextInfo: options.contextInfo,
+    ...options,
+   };
+
+   switch (contentType) {
+    case 'text':
+     return sendText(buffer.toString(), sendOptions);
+    case 'image':
+     return options.asSticker ? sendSticker(buffer, sendOptions) : sendImage(buffer, sendOptions);
+    case 'video':
+     if (options.asSticker) return sendVideoAsSticker(buffer, sendOptions);
+     if (options.asAudio) return sendVideoAsAudio(buffer, sendOptions);
+     return sendVideo(buffer, sendOptions);
+    case 'audio':
+     return sendAudio(buffer, sendOptions);
+    case 'document':
+     return sendDocument(buffer, sendOptions);
+    case 'sticker':
+     return mimeType.startsWith('image/') ? sendSticker(buffer, sendOptions) : sendVideoAsSticker(buffer, sendOptions);
+    default:
+     return sendDocument(buffer, { ...sendOptions, mimetype: mimeType });
+   }
+  } catch (error) {
+   console.error('Error in send function:', error);
+   throw error;
   }
-
-  // Handle audio specifically from video
-  if (contentType === 'audio' && mimeType.startsWith('video/')) {
-   return sendVideoAsAudio(buffer, options);
-  }
-
-  // Prepare message content
-  const messageContent = {
-   image: { image: buffer },
-   video: { video: buffer },
-   audio: { audio: buffer, mimetype: 'audio/mp4' },
-   document: { document: buffer, mimetype: mimeType, fileName: options.filename || 'file' },
-  };
-
-  let sendOptions = {
-   quoted: this.data,
-   caption: options.caption,
-   contextInfo: options.contextInfo,
-  };
-
-  // Fallback to sending as text if no valid content type is found
-  if (contentType === 'text' || !messageContent[contentType]) {
-   return this.client.sendMessage(jid, { text: buffer.toString(), ...sendOptions });
-  }
-
-  // Send the message based on determined content type
-  return this.client.sendMessage(jid, { ...messageContent[contentType], ...sendOptions }, { ...options });
  }
  async download(message) {
   const msg = message || this.reply_message?.messageInfo;
