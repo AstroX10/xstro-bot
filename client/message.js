@@ -251,7 +251,7 @@ class Handler {
   };
 
   const convertToPlayableVideo = async (buffer) => {
-   return await toVideo(buffer);
+   return toVideo(buffer);
   };
 
   try {
