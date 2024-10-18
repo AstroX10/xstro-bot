@@ -1,10 +1,21 @@
 const { command } = require('../lib');
 const { parsedJid } = require('../lib');
 
+const adminCache = new Map();
+
 async function isAdmin(groupJid, userJid, client) {
+ const cacheKey = `${groupJid}-${userJid}`;
+ if (adminCache.has(cacheKey)) {
+  return adminCache.get(cacheKey);
+ }
+
  const metadata = await client.groupMetadata(groupJid);
  const participant = metadata.participants.find((p) => p.id === userJid);
- return participant?.admin === 'admin' || participant?.admin === 'superadmin';
+ const isAdmin = participant?.admin === 'admin' || participant?.admin === 'superadmin';
+ adminCache.set(cacheKey, isAdmin);
+ setTimeout(() => adminCache.delete(cacheKey), 300000);
+
+ return isAdmin;
 }
 
 command(
