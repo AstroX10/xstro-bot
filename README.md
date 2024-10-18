@@ -1,6 +1,6 @@
 ### Xstro Bot
 
-Xstro Bot is a simple WhatsApp bot built with Baileys, designed for speed and efficiency in automating basic tasks.
+Xstro Bot is a simple WhatsApp bot built with Baileys, designed for speed and efficiency in automating tasks.
 
 ### Setup
 
