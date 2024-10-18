@@ -5,7 +5,7 @@ const path = require('path');
 const FileType = require('file-type');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
-const { getBuffer, imageToWebp, writeExifVid, videoToWebp, writeExifImg, toAudio } = require('../utils');
+const { getBuffer, imageToWebp, writeExifVid, videoToWebp, writeExifImg, toAudio, toVideo } = require('../utils');
 const { getDevice, downloadContentFromMessage, jidDecode } = require('baileys');
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -194,9 +194,10 @@ class Handler {
    return this.client.sendMessage(jid, { image: buffer, ...options });
   };
 
-  const sendVideo = (buffer, options) => {
-   return this.client.sendMessage(jid, { video: buffer, ...options });
-  };
+  async function sendVideo(buffer, options) {
+   const processed = await toVideo(buffer);
+   return this.client.sendMessage(jid, { video: processed, ...options });
+  }
 
   const sendAudio = (buffer, options) => {
    return this.client.sendMessage(jid, { audio: buffer, mimetype: 'audio/mp4', ...options });
