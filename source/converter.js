@@ -50,6 +50,32 @@ command(
   const res = message.reply_message?.video;
   if (!res) return message.reply('_Reply to a Sticker_');
   const contentBuffer = await message.download(message.reply_message.data);
-  return await message.send(contentBuffer, { type: 'image' });
+  return await message.send(contentBuffer.buffer, { type: 'image' });
+ }
+);
+
+command(
+ {
+  pattern: 'tomp3',
+  desc: 'Converts Video to Mp3 Audio',
+  type: 'converter',
+ },
+ async (message) => {
+  if (!message.reply_message?.video) return message.reply('_Reply Video Only!_');
+  const res = await message.download(message.reply_message.data);
+  return message.send(res.buffer, { type: 'audio' });
+ }
+);
+
+command(
+ {
+  pattern: 'tovideo',
+  desc: 'Converts Sticker to Video',
+  type: 'converter',
+ },
+ async (message) => {
+  if (!message.reply_message?.sticker) return await message.reply('_Reply A Sticker_');
+  const mp4 = await message.download(message.reply_message.data);
+  return await message.send(mp4.buffer, { type: 'video' });
  }
 );
