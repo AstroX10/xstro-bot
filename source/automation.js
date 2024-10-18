@@ -1,6 +1,6 @@
 const { command } = require('../lib');
 const { isAdmin } = require('./group');
-const { getAntiLink, setAntiLink, deleteAntiLink, AntiWord, addAntiWord, getAntiWords, AntiSpam, SpamCheck, getAntiSpam, setAntiSpam, deleteAntiSpam, addMessage, checkSpam, cleanupOldMessages } = require('../db');
+const { getAntiLink, setAntiLink, deleteAntiLink, AntiWord, addAntiWord, getAntiWords, getAntiSpam, setAntiSpam, addMessage, checkSpam, cleanupOldMessages, addWarning, resetWarnings } = require('../db');
 
 command(
  {
@@ -122,29 +122,37 @@ command(
 command(
  {
   pattern: 'antispam ?(.*)',
-  desc: 'Set AntiSpam on | off',
+  desc: 'Set AntiSpam on | off | kick | warn',
   type: 'group',
  },
  async (message, match, m, client) => {
   if (!message.isGroup) return message.reply('_For groups only!_');
-  if (!match) return message.reply('_Wrong, Use ' + message.prefix + 'antispam on_');
+  if (!match) return message.reply('_Wrong, Use ' + message.prefix + 'antispam on | off | kick | warn_');
   const isUserAdmin = await isAdmin(message.jid, message.user, client);
   if (!isUserAdmin) return message.reply("_I'm not an admin._");
 
   const cmd = match.trim().toLowerCase();
   if (!cmd) {
    const settings = await getAntiSpam(message.jid);
-   return message.reply(settings ? `_AntiSpam: ${settings.enabled ? 'on' : 'off'}_` : 'AntiSpam is not set.');
+   return message.reply(settings ? `_AntiSpam: ${settings.enabled ? 'on' : 'off'}, Kick: ${settings.kickEnabled ? 'on' : 'off'}, Warn: ${settings.warnEnabled ? 'on' : 'off'}_` : 'AntiSpam is not set.');
   }
   if (cmd === 'off') {
-   await deleteAntiSpam(message.jid);
+   await setAntiSpam(message.jid, false, false, false);
    return message.reply('AntiSpam turned off.');
   }
   if (cmd === 'on') {
-   await setAntiSpam(message.jid, true);
+   await setAntiSpam(message.jid, true, false, false);
    return message.reply('AntiSpam turned on.');
   }
-  return message.reply('_Invalid command. Use on or off._');
+  if (cmd === 'kick') {
+   await setAntiSpam(message.jid, true, true, false);
+   return message.reply('AntiSpam with kick enabled.');
+  }
+  if (cmd === 'warn') {
+   await setAntiSpam(message.jid, true, false, true);
+   return message.reply('AntiSpam with warnings enabled.');
+  }
+  return message.reply('_Invalid command. Use on, off, kick, or warn._');
  }
 );
 
@@ -162,12 +170,46 @@ command(
   const isUserAdmin = await isAdmin(message.jid, message.participant, client);
   if (isUserAdmin) return;
 
-  const isSpam = await checkSpam(message.jid, message.jid, message.text);
+  const isSpam = await checkSpam(message.jid, message.participant, message.text);
   if (isSpam) {
    await client.sendMessage(message.jid, { delete: message.key });
-   await message.reply(`@${message.participant.split('@')[0]}, please don't spam!`, {
-    mentions: [message.participant],
-   });
+
+   if (settings.warnEnabled) {
+    const warningCount = await addWarning(message.jid, message.participant);
+    if (warningCount >= 3) {
+     if (settings.kickEnabled) {
+      try {
+       await client.groupParticipantsUpdate(message.jid, [message.participant], 'remove');
+       await message.reply(`@${message.participant.split('@')[0]} has been kicked for repeated spamming.`, {
+        mentions: [message.participant],
+       });
+      } catch (error) {
+       console.error('Error kicking user:', error);
+       await message.reply(`Failed to kick @${message.participant.split('@')[0]}. Please check bot permissions.`, {
+        mentions: [message.participant],
+       });
+      }
+     } else {
+      await message.reply(`@${message.participant.split('@')[0]} has received 3 warnings for spamming. Further violations may result in being kicked.`, {
+       mentions: [message.participant],
+      });
+     }
+     await resetWarnings(message.jid, message.participant);
+    } else {
+     await message.reply(`@${message.participant.split('@')[0]}, please don't spam! Warning ${warningCount}/3`, {
+      mentions: [message.participant],
+     });
+    }
+   } else if (settings.kickEnabled) {
+    await client.groupParticipantsUpdate(message.jid, [message.participant], 'remove');
+    await message.reply(`@${message.participant.split('@')[0]} has been kicked for spamming.`, {
+     mentions: [message.participant],
+    });
+   } else {
+    await message.reply(`@${message.participant.split('@')[0]}, please don't spam!`, {
+     mentions: [message.participant],
+    });
+   }
   } else {
    await addMessage(message.jid, message.participant, message.text);
   }

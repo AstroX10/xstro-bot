@@ -6,7 +6,7 @@ const { getPausedChats, savePausedChat, deleteAllPausedChats, PausedChats } = re
 const { saveMessage, loadMessage, saveChat, getName } = require('./store');
 const { getWarns, saveWarn, resetWarn } = require('./warn');
 const { setMessage, getMessage, delMessage, toggleStatus, getStatus } = require('./greetings');
-const { AntiSpam, SpamCheck, getAntiSpam, setAntiSpam, deleteAntiSpam, addMessage, checkSpam, cleanupOldMessages } = require('./antispam');
+const { AntiSpam, SpamCheck, getAntiSpam, setAntiSpam, deleteAntiSpam, addMessage, checkSpam, cleanupOldMessages, addWarning, resetWarnings } = require('./antispam');
 module.exports = {
  getAntiLink,
  setAntiLink,
@@ -44,4 +44,6 @@ module.exports = {
  addMessage,
  checkSpam,
  cleanupOldMessages,
+ addWarning,
+ resetWarnings
 };

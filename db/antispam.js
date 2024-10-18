@@ -12,6 +12,16 @@ const AntiSpam = config.DATABASE.define('AntiSpam', {
   allowNull: false,
   defaultValue: false,
  },
+ kickEnabled: {
+  type: DataTypes.BOOLEAN,
+  allowNull: false,
+  defaultValue: false,
+ },
+ warnEnabled: {
+  type: DataTypes.BOOLEAN,
+  allowNull: false,
+  defaultValue: false,
+ },
 });
 
 const SpamCheck = config.DATABASE.define('SpamCheck', {
@@ -33,18 +43,37 @@ const SpamCheck = config.DATABASE.define('SpamCheck', {
  },
 });
 
+const SpamWarning = config.DATABASE.define('SpamWarning', {
+ groupJid: {
+  type: DataTypes.STRING,
+  allowNull: false,
+ },
+ sender: {
+  type: DataTypes.STRING,
+  allowNull: false,
+ },
+ warningCount: {
+  type: DataTypes.INTEGER,
+  allowNull: false,
+  defaultValue: 0,
+ },
+});
+
 module.exports = {
  AntiSpam,
  SpamCheck,
+ SpamWarning,
  async getAntiSpam(groupJid) {
   return await AntiSpam.findOne({
    where: { groupJid },
   });
  },
- async setAntiSpam(groupJid, enabled) {
+ async setAntiSpam(groupJid, enabled, kickEnabled, warnEnabled) {
   return await AntiSpam.upsert({
    groupJid,
    enabled,
+   kickEnabled,
+   warnEnabled,
   });
  },
  async deleteAntiSpam(groupJid) {
@@ -55,7 +84,7 @@ module.exports = {
  async addMessage(groupJid, sender, message) {
   return await SpamCheck.create({
    groupJid,
-   // sender,
+   sender,
    message,
    timestamp: new Date(),
   });
@@ -73,6 +102,22 @@ module.exports = {
    },
   });
   return count > 0;
+ },
+ async addWarning(groupJid, sender) {
+  const [warning, created] = await SpamWarning.findOrCreate({
+   where: { groupJid, sender },
+   defaults: { warningCount: 1 },
+  });
+  if (!created) {
+   warning.warningCount += 1;
+   await warning.save();
+  }
+  return warning.warningCount;
+ },
+ async resetWarnings(groupJid, sender) {
+  return await SpamWarning.destroy({
+   where: { groupJid, sender },
+  });
  },
  async cleanupOldMessages() {
   const fiveMinutesAgo = new Date(new Date() - 5 * 60 * 1000);
