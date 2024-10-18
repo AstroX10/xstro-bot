@@ -159,6 +159,7 @@ class Handler {
  }
  async send(content, options = {}) {
   const jid = options.jid || this.jid;
+
   const getContentBuffer = async (content) => {
    if (Buffer.isBuffer(content)) return content;
    if (typeof content === 'string' && content.startsWith('http')) {
@@ -166,6 +167,7 @@ class Handler {
    }
    return Buffer.from(content);
   };
+
   const detectMimeType = async (buffer) => {
    try {
     const fileType = await FileType.fromBuffer(buffer);
@@ -175,6 +177,7 @@ class Handler {
     return 'application/octet-stream';
    }
   };
+
   const sendText = (text, options) => {
    return this.client.sendMessage(jid, { text, ...options });
   };
@@ -228,8 +231,13 @@ class Handler {
 
   try {
    const buffer = await getContentBuffer(content);
-   if (!buffer) throw new Error('Failed to retrieve the buffer from the content.');
+   if (!Buffer.isBuffer(buffer)) {
+    throw new Error('Failed to retrieve a valid buffer from the content.');
+   }
+
    const mimeType = await detectMimeType(buffer);
+   console.log('Detected MIME Type:', mimeType);
+
    const contentType = options.type || mimeType.split('/')[0];
 
    const sendOptions = {
@@ -245,8 +253,12 @@ class Handler {
     case 'image':
      return options.asSticker ? sendSticker(buffer, sendOptions) : sendImage(buffer, sendOptions);
     case 'video':
-     if (options.asSticker) return sendVideoAsSticker(buffer, sendOptions);
-     if (options.asAudio) return sendVideoAsAudio(buffer, sendOptions);
+     if (options.asSticker) {
+      return sendVideoAsSticker(buffer, sendOptions);
+     }
+     if (options.asAudio) {
+      return sendVideoAsAudio(buffer, sendOptions);
+     }
      return sendVideo(buffer, sendOptions);
     case 'audio':
      return sendAudio(buffer, sendOptions);
@@ -262,6 +274,7 @@ class Handler {
    throw error;
   }
  }
+
  async download(message) {
   const msg = message || this.reply_message?.messageInfo;
 
