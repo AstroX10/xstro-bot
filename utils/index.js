@@ -64,8 +64,28 @@ const toPTT = (inputBuffer) => {
  * @param {Buffer} buffer Video Buffer
  * @param {String} ext File Extension
  */
-function toVideo(buffer, ext) {
- return ffmpeg(buffer, ['-c:v', 'libx264', '-c:a', 'aac', '-ab', '128k', '-ar', '44100', '-crf', '32', '-preset', 'slow'], ext, 'mp4');
+async function toVideo(inputBuffer) {
+ const inputFilePath = path.join(tmpdir(), 'input-video');
+ const outputFilePath = path.join(tmpdir(), 'output-video.mp4');
+
+ fs.writeFileSync(inputFilePath, inputBuffer);
+
+ return new Promise((resolve, reject) => {
+  ffmpeg(inputFilePath)
+   .setFfmpegPath(ffmpegPath)
+   .outputOptions(['-c:v libx264', '-c:a aac', '-b:a 128k', '-ar 44100', '-pix_fmt yuv420p', '-movflags +faststart', '-preset fast', '-crf 28', '-vf scale=480:trunc(ow/a/2)*2', '-profile:v baseline'])
+   .on('end', () => {
+    const outputBuffer = fs.readFileSync(outputFilePath);
+    fs.unlinkSync(inputFilePath);
+    fs.unlinkSync(outputFilePath);
+    resolve(outputBuffer);
+   })
+   .on('error', (err) => {
+    fs.unlinkSync(inputFilePath);
+    reject(err);
+   })
+   .save(outputFilePath);
+ });
 }
 
 async function getBuffer(url, options = {}) {
