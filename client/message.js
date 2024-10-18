@@ -90,9 +90,6 @@ class Handler {
    jid: quoted.key.remoteJid,
    type: quoted.type,
    id: quoted.key.id,
-   sender: quoted.sender,
-   participant: quoted.participant,
-   mention: quoted.message?.extendedTextMessage?.contextInfo?.mentionedJid || quoted.message?.contextInfo?.mentionedJid || [],
    fromMe: quoted.key.fromMe,
    owner: quoted.key.remoteJid === this.sudo || quoted.key.fromMe,
    contextInfo: quoted.message?.extendedTextMessage?.contextInfo || quoted.message?.contextInfo || {},
@@ -107,7 +104,8 @@ class Handler {
    document: this._getMediaType(quoted.message) === 'document' || Boolean(quoted.message?.documentMessage),
    sticker: this._getMediaType(quoted.message) === 'sticker' || Boolean(quoted.message?.stickerMessage),
   };
-  this.reply_message.senderJid = this.reply_message.participant || this.reply_message.sender;
+  this.reply_message.senderJid = quoted.key.participant || quoted.key.remoteJid;
+  this.reply_message.mention = quoted.message?.extendedTextMessage?.contextInfo?.mentionedJid || quoted.message?.contextInfo?.mentionedJid || [];
  }
 
  _getMediaType(message) {
