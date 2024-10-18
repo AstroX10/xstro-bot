@@ -1,4 +1,5 @@
 const { command } = require('../lib');
+const { getBuffer } = require('../utils');
 const { STICKER_PACK } = require('../config');
 
 command(
@@ -36,5 +37,26 @@ command(
    author: STICKER_PACK.split(';')[0],
    packname: STICKER_PACK.split(';')[1],
   });
+ }
+);
+
+command(
+ {
+  pattern: 'image',
+  desc: 'Converts Sticker/Video to Images',
+  type: 'converter',
+ },
+ async (message, match) => {
+  const res = message.reply_message?.video || message.reply_message?.sticker || (match.includes('http') && match);
+
+  if (!res) return message.reply('_Reply to a Sticker/Video or provide a valid URL!_');
+
+  let contentBuffer;
+  if (message.reply_message?.video || message.reply_message?.sticker) contentBuffer = await message.download(message.reply_message.data);
+  if (match.includes('http')) {
+   contentBuffer = await getBuffer(match);
+   if (!contentBuffer) return message.reply('_Failed to process the media or URL_');
+   return await message.send(contentBuffer, { type: 'image' });
+  }
  }
 );
