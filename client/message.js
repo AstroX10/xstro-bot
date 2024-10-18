@@ -101,7 +101,7 @@ class Handler {
    document: this._getMediaType(quoted.message) === 'document' || Boolean(quoted.message?.documentMessage),
    sticker: this._getMediaType(quoted.message) === 'sticker' || Boolean(quoted.message?.stickerMessage),
   };
-  this.reply_message.participant = quoted.key.participant || (quoted.key.remoteJid.includes('@s.whatsapp.net') ? quoted.key.remoteJid : null);
+  this.reply_message.participant = this.decodeJid(quoted.participant || quoted.key.participant || quoted.key.remoteJid); 
   this.reply_message.groupJid = quoted.key.remoteJid.includes('@g.us') ? quoted.key.remoteJid : null;
   this.reply_message.mention = quoted.message?.extendedTextMessage?.contextInfo?.mentionedJid || quoted.message?.contextInfo?.mentionedJid || [];
  }
